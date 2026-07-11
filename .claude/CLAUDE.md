@@ -28,12 +28,23 @@ work is already on GitHub — nothing to wonder about.
 - Do **not** open a PR unless the human asks for one; when you do, follow any
   `PULL_REQUEST_TEMPLATE`.
 
-## 5. Repositories & naming
-- All work belongs in a GitHub repo. If work outgrows the current repo or
-  doesn't fit it, create a **new repo early** with a clear, descriptive,
-  kebab-case name that says what it is (e.g. `invoice-parser`,
-  `budget-dashboard`, `money-pilot`) — never `test`, `tmp`, `best-repo-ever`,
-  or other throwaway names. Scaffold the autosave bundle into every new repo.
+## 5. Starting a new project (autopilot — never blocks)
+Every project gets a home automatically. Follow this decision procedure so a
+new project is never stuck waiting on a permission:
+
+1. **If repo-creation is available** (the GitHub App has been granted it —
+   test with a `create_repository` call): create a **new repo** with a clear,
+   descriptive, kebab-case name that says what it is (e.g. `invoice-parser`,
+   `budget-dashboard`, `money-pilot`) — never `test`, `tmp`, `best-repo-ever`,
+   or throwaway names. Scaffold the autosave bundle into it and work there.
+2. **If repo-creation is NOT available** (current default): don't stall. Work
+   in the existing workspace repo on a new branch `claude/<sensible-name>`,
+   keeping the project self-contained in a top-level `<sensible-name>/` folder.
+   Autosave persists it every turn. **Graduate** it to its own dedicated repo
+   later, the moment repo-creation becomes available.
+
+Either way the work is named sensibly, committed, and pushed automatically —
+autopilot never waits on a human.
 
 ## 6. Hygiene & secrets
 - Never commit secrets (`.env`, private keys, tokens, credentials) — see
