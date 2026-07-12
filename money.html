@@ -822,13 +822,15 @@ function stepVisible(step,st){
 }
 function renderAreas(){
   const root=document.getElementById('areas');
+  const filterOn=state.filter!=='all';
   root.innerHTML=AREAS.map(area=>{
     const steps=allSteps(area);
     const doneN=steps.filter(s=>stepState(s).done).length;
     const pct=steps.length?Math.round(doneN/steps.length*100):0;
     const complete=doneN===steps.length&&steps.length>0;
-    const open=!!state.open[area.id];
     const visSteps=steps.filter(s=>stepVisible(s,stepState(s)));
+    if(filterOn&&!visSteps.length)return ''; // hide areas with nothing matching the filter
+    const open=filterOn||!!state.open[area.id]; // a filter auto-expands its matches — otherwise collapsed cards make filters look dead
     const potentialLeft=steps.filter(s=>!stepState(s).done).reduce((a,s)=>a+num(stepState(s).est),0);
     const stepsHtml=visSteps.length?visSteps.map(s=>{
       const st=stepState(s);
@@ -868,7 +870,11 @@ function renderAreas(){
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('')||`<div class="card" style="text-align:center;color:var(--ink-2)">${
+    state.filter==='done'?'Nothing checked off yet — grab your first ⚡ quick win and it\'ll show up here.':
+    state.filter==='quick'?'No quick wins left unchecked — you\'ve grabbed them all ⚡🏆':
+    'Nothing left to do. You optimized the entire list. Legend. 🏆'
+  }</div>`;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
