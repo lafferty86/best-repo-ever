@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIREside 🔥 — Optimize what you already have</title>
+<style>
+/* ============ theme ============ */
+:root{
+  --paper:#f9f9f7; --surface:#fcfcfb; --surface-2:#f2f1ec;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-mut:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --accent:#2a78d6; --accent-soft:#e3eefb;
+  --series-1:#2a78d6; --series-2:#1baf7a;
+  --good:#0ca30c; --good-text:#006300; --warn:#b97a00; --crit:#d03b3b;
+  --shadow:0 1px 2px rgba(11,11,11,.06),0 6px 18px rgba(11,11,11,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+    --ink:#ffffff; --ink-2:#c3c2b7; --ink-mut:#898781;
+    --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --accent:#3987e5; --accent-soft:#16283e;
+    --series-1:#3987e5; --series-2:#199e70;
+    --good:#0ca30c; --good-text:#0ca30c;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="light"]{
+  --paper:#f9f9f7; --surface:#fcfcfb; --surface-2:#f2f1ec;
+  --ink:#0b0b0b; --ink-2:#52514e; --ink-mut:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+  --accent:#2a78d6; --accent-soft:#e3eefb;
+  --series-1:#2a78d6; --series-2:#1baf7a;
+  --good:#0ca30c; --good-text:#006300;
+  --shadow:0 1px 2px rgba(11,11,11,.06),0 6px 18px rgba(11,11,11,.06);
+}
+:root[data-theme="dark"]{
+  --paper:#0d0d0d; --surface:#1a1a19; --surface-2:#232322;
+  --ink:#ffffff; --ink-2:#c3c2b7; --ink-mut:#898781;
+  --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+  --accent:#3987e5; --accent-soft:#16283e;
+  --series-1:#3987e5; --series-2:#199e70;
+  --good:#0ca30c; --good-text:#0ca30c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+}
+
+/* ============ base ============ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:var(--paper); color:var(--ink);
+  line-height:1.45; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--ink)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 18px 80px}
+
+/* ============ header ============ */
+header{
+  background:linear-gradient(135deg,var(--accent) 0%, #6f4fd8 100%);
+  color:#fff; padding:26px 0 68px; position:relative;
+}
+header .wrap{padding-bottom:0}
+.masthead{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.masthead h1{margin:0;font-size:clamp(1.5rem,3.4vw,2.1rem);letter-spacing:-.02em}
+.masthead p{margin:4px 0 0;opacity:.92;font-size:.95rem;max-width:52ch}
+.head-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ghost-btn{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);
+  color:#fff;border-radius:10px;padding:7px 12px;font-size:.85rem;font-weight:600;
+}
+.ghost-btn:hover{background:rgba(255,255,255,.24)}
+
+/* ============ tabs ============ */
+nav.tabs{
+  display:flex;gap:8px;max-width:1060px;margin:-46px auto 22px;padding:0 18px;
+  position:relative;z-index:2;
+}
+.tab-btn{
+  flex:1;background:var(--surface);border:1px solid var(--ring);border-radius:14px;
+  padding:13px 10px;font-weight:700;font-size:.98rem;color:var(--ink-2);
+  box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.tab-btn[aria-selected="true"]{color:var(--ink);outline:2px solid var(--accent);outline-offset:-2px}
+.tab-btn .count{
+  background:var(--accent-soft);color:var(--accent);border-radius:999px;
+  font-size:.75rem;padding:2px 8px;font-weight:800;
+}
+main section[hidden]{display:none}
+
+/* ============ cards & tiles ============ */
+.card{
+  background:var(--surface);border:1px solid var(--ring);border-radius:16px;
+  box-shadow:var(--shadow);padding:18px;margin-bottom:18px;
+}
+.card h2{margin:0 0 4px;font-size:1.05rem}
+.card .sub{margin:0 0 14px;color:var(--ink-2);font-size:.88rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.tile{
+  background:var(--surface);border:1px solid var(--ring);border-radius:16px;
+  box-shadow:var(--shadow);padding:14px 16px;
+}
+.tile .lbl{font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-mut)}
+.tile .val{font-size:1.65rem;font-weight:800;letter-spacing:-.02em;margin:2px 0 0}
+.tile .delta{font-size:.82rem;font-weight:700;margin-top:2px;color:var(--ink-2)}
+.tile .delta.up{color:var(--good-text)}
+.tile .delta.down{color:var(--crit)}
+.tile.hero{grid-column:1/-1;background:linear-gradient(135deg,var(--accent-soft),transparent 70%)}
+.tile.hero .val{font-size:2.2rem}
+
+/* ============ inputs ============ */
+.num-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.field label{display:block;font-size:.78rem;font-weight:700;color:var(--ink-2);margin-bottom:4px}
+.field .inwrap{position:relative}
+.field .inwrap .pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-mut);font-size:.9rem}
+.field input{
+  width:100%;background:var(--surface-2);border:1px solid var(--ring);border-radius:10px;
+  padding:9px 10px 9px 24px;font-size:1rem;font-weight:600;
+}
+.field input.nopre{padding-left:10px}
+.field input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.field .hint{font-size:.72rem;color:var(--ink-mut);margin-top:3px}
+
+/* ============ chart ============ */
+.chart-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.legend{display:flex;gap:16px;font-size:.83rem;color:var(--ink-2);margin-left:auto}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+.chart-box{position:relative}
+.chart-box svg{width:100%;height:auto;display:block}
+#tooltip{
+  position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--ring);
+  border-radius:10px;box-shadow:var(--shadow);padding:8px 11px;font-size:.82rem;
+  display:none;z-index:5;min-width:150px;
+}
+#tooltip .tt-y{font-weight:800;margin-bottom:3px}
+#tooltip .row{display:flex;align-items:center;gap:6px;justify-content:space-between}
+#tooltip .row b{font-variant-numeric:tabular-nums}
+details.tblview{margin-top:10px;font-size:.85rem}
+details.tblview summary{cursor:pointer;color:var(--ink-2);font-weight:600}
+details.tblview table{border-collapse:collapse;margin-top:8px;width:100%}
+details.tblview th,details.tblview td{
+  text-align:right;padding:4px 10px;border-bottom:1px solid var(--grid);
+  font-variant-numeric:tabular-nums;
+}
+details.tblview th:first-child,details.tblview td:first-child{text-align:left}
+
+/* ============ insight strip ============ */
+.insight{
+  display:flex;gap:12px;align-items:flex-start;background:var(--accent-soft);
+  border:1px solid var(--ring);border-radius:14px;padding:13px 16px;margin-bottom:18px;
+  font-size:.92rem;color:var(--ink);
+}
+.insight .em{font-size:1.3rem;line-height:1}
+
+/* ============ optimize workspace ============ */
+.impact-bar{
+  position:sticky;top:10px;z-index:8;
+  background:var(--surface);border:1px solid var(--ring);border-radius:16px;
+  box-shadow:var(--shadow);padding:13px 16px;margin-bottom:16px;
+  display:flex;gap:20px;flex-wrap:wrap;align-items:center;
+}
+.impact-bar .stat .lbl{font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-mut)}
+.impact-bar .stat .val{font-size:1.15rem;font-weight:800;font-variant-numeric:tabular-nums}
+.impact-bar .stat .val.good{color:var(--good-text)}
+.impact-bar .spark{margin-left:auto;font-size:.82rem;color:var(--ink-2);max-width:26ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{
+  background:var(--surface);border:1px solid var(--ring);border-radius:999px;
+  padding:6px 14px;font-size:.85rem;font-weight:600;color:var(--ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.area{
+  background:var(--surface);border:1px solid var(--ring);border-radius:16px;
+  box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;
+}
+.area-head{
+  width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;
+  background:none;border:none;text-align:left;color:var(--ink);
+}
+.area-head .em{font-size:1.5rem;line-height:1}
+.area-head .ttl{font-weight:800;font-size:1rem}
+.area-head .why{font-size:.8rem;color:var(--ink-2);margin-top:1px}
+.area-head .meta{margin-left:auto;text-align:right;flex-shrink:0}
+.area-head .meta .pct{font-size:.8rem;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.area-head .meta .rng{font-size:.72rem;color:var(--ink-mut)}
+.area-head .car{color:var(--ink-mut);transition:transform .18s;flex-shrink:0}
+.area.open .area-head .car{transform:rotate(90deg)}
+.pbar{height:6px;background:var(--surface-2);border-radius:0}
+.pbar i{display:block;height:100%;background:var(--series-1);border-radius:0 4px 4px 0;transition:width .3s}
+.area.done .pbar i{background:var(--good)}
+.area.done .area-head .meta .pct{color:var(--good-text)}
+.area-body{padding:6px 16px 16px;display:none}
+.area.open .area-body{display:block}
+
+.step{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--grid);
+}
+.step:last-of-type{border-bottom:none}
+.step input[type=checkbox]{
+  width:20px;height:20px;margin-top:2px;accent-color:var(--good);cursor:pointer;flex-shrink:0;
+}
+.step .body{flex:1;min-width:0}
+.step .txt{font-size:.93rem;font-weight:600}
+.step.done .txt{text-decoration:line-through;color:var(--ink-mut)}
+.step .tip{font-size:.8rem;color:var(--ink-2);margin-top:2px}
+.step .badges{display:inline-flex;gap:6px;margin-left:6px;vertical-align:1px}
+.badge{
+  font-size:.65rem;font-weight:800;letter-spacing:.03em;border-radius:999px;padding:1px 8px;
+}
+.badge.quick{background:var(--accent-soft);color:var(--accent)}
+.badge.boost{background:var(--surface-2);color:var(--ink-2)}
+.step .est{
+  flex-shrink:0;text-align:right;
+}
+.step .est label{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-mut)}
+.step .est .inwrap{position:relative;display:inline-block}
+.step .est .pre{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--ink-mut);font-size:.8rem}
+.step .est input{
+  width:86px;background:var(--surface-2);border:1px solid var(--ring);border-radius:8px;
+  padding:5px 6px 5px 20px;font-size:.88rem;font-weight:700;text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.step .est input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.step .del{
+  background:none;border:none;color:var(--ink-mut);font-size:.9rem;padding:2px 4px;flex-shrink:0;
+}
+.step .del:hover{color:var(--crit)}
+.add-step{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.add-step input[type=text]{
+  flex:1;min-width:180px;background:var(--surface-2);border:1px solid var(--ring);
+  border-radius:10px;padding:8px 10px;font-size:.9rem;
+}
+.add-step .mini{
+  background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 14px;
+  font-weight:700;font-size:.85rem;
+}
+.area-notes{margin-top:12px}
+.area-notes textarea{
+  width:100%;min-height:52px;background:var(--surface-2);border:1px solid var(--ring);
+  border-radius:10px;padding:8px 10px;font-size:.87rem;resize:vertical;
+}
+.area-notes label{font-size:.72rem;font-weight:700;color:var(--ink-mut);text-transform:uppercase;letter-spacing:.04em}
+
+/* ============ footer / misc ============ */
+footer{max-width:1060px;margin:30px auto 0;padding:0 18px;color:var(--ink-mut);font-size:.78rem}
+footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.danger-btn{background:none;border:1px solid var(--ring);color:var(--crit);border-radius:8px;padding:5px 10px;font-size:.78rem;font-weight:600}
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(90px);
+  background:var(--ink);color:var(--paper);padding:11px 20px;border-radius:12px;
+  font-weight:700;font-size:.9rem;box-shadow:var(--shadow);transition:transform .28s,visibility .28s;z-index:60;
+  max-width:88vw;text-align:center;visibility:hidden;
+}
+#toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+.fi-banner{
+  background:linear-gradient(135deg,var(--good) 0%, #0e7a4e 100%);color:#fff;
+  border-radius:16px;padding:16px 20px;margin-bottom:18px;font-weight:700;display:none;
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;animation:none!important}
+}
+@media (max-width:640px){
+  .impact-bar{gap:12px}
+  .impact-bar .spark{display:none}
+  .step .est input{width:74px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="masthead">
+      <div>
+        <h1>🔥 FIREside</h1>
+        <p>Financial independence by <b>optimizing what you already have</b> — not by chasing more income. Every dollar you trim works twice: more invested each month, and a smaller pile you need in the first place.</p>
+      </div>
+      <div class="head-actions">
+        <button class="ghost-btn" id="btn-theme" title="Cycle theme">🌗 Theme</button>
+        <button class="ghost-btn" id="btn-export">💾 Save to file</button>
+        <button class="ghost-btn" id="btn-import">📂 Load from file</button>
+        <input type="file" id="file-import" accept=".json,application/json" hidden>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn" id="tabbtn-dash" role="tab" aria-selected="true" data-tab="dash">🔥 Dashboard</button>
+  <button class="tab-btn" id="tabbtn-opt" role="tab" aria-selected="false" data-tab="opt">✅ Optimize <span class="count" id="opt-count">0/0</span></button>
+</nav>
+
+<main class="wrap">
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="tab-dash" role="tabpanel">
+    <div class="fi-banner" id="fi-banner">🎉 By these numbers you're already financially independent. Everything below is gravy.</div>
+
+    <div class="card">
+      <h2>Your numbers</h2>
+      <p class="sub">Five inputs, everything else is computed. Saved automatically on this device.</p>
+      <div class="num-grid">
+        <div class="field">
+          <label for="in-income">Monthly take-home income</label>
+          <div class="inwrap"><span class="pre">$</span><input id="in-income" data-key="income" type="number" min="0" step="100"></div>
+        </div>
+        <div class="field">
+          <label for="in-spend">Monthly spending</label>
+          <div class="inwrap"><span class="pre">$</span><input id="in-spend" data-key="spend" type="number" min="0" step="100"></div>
+        </div>
+        <div class="field">
+          <label for="in-assets">Invested assets today</label>
+          <div class="inwrap"><span class="pre">$</span><input id="in-assets" data-key="assets" type="number" min="0" step="1000"></div>
+        </div>
+        <div class="field">
+          <label for="in-ret">Expected real return %</label>
+          <div class="inwrap"><input id="in-ret" data-key="ret" class="nopre" type="number" min="0" max="15" step="0.5"></div>
+          <div class="hint">After inflation. 5% is a common planning default.</div>
+        </div>
+        <div class="field">
+          <label for="in-swr">Withdrawal rate %</label>
+          <div class="inwrap"><input id="in-swr" data-key="swr" class="nopre" type="number" min="1" max="10" step="0.25"></div>
+          <div class="hint">4% rule → FIRE number = 25× annual spending.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+
+    <div class="insight" id="insight"></div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div>
+          <h2>Path to financial independence</h2>
+          <p class="sub" style="margin:0">Projected invested assets — current plan vs. with your checked optimizations.</p>
+        </div>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--series-1)"></i>Current plan</span>
+          <span><i class="swatch" style="background:var(--series-2)"></i>Optimized</span>
+        </div>
+      </div>
+      <div class="chart-box" id="chart-box">
+        <div id="tooltip"></div>
+      </div>
+      <details class="tblview">
+        <summary>View as table</summary>
+        <div id="chart-table"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= OPTIMIZE ================= -->
+  <section id="tab-opt" role="tabpanel" hidden>
+    <div class="impact-bar" id="impact-bar"></div>
+    <div class="chips" id="chips">
+      <button class="chip" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" data-filter="todo" aria-pressed="false">To do</button>
+      <button class="chip" data-filter="quick" aria-pressed="false">⚡ Quick wins</button>
+      <button class="chip" data-filter="done" aria-pressed="false">Done</button>
+    </div>
+    <div id="areas"></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="row">
+    <span>FIREside saves to this browser (localStorage). Use <b>Save to file</b> for backups. Estimates are planning tools, not financial advice.</span>
+    <button class="danger-btn" id="btn-reset">Reset everything</button>
+  </div>
+</footer>
+
+<div id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+'use strict';
+/* ================================================================
+   FIREside — data
+   step.type: 'spend' = cuts monthly spending (works twice)
+              'boost' = extra monthly investing (match, fees, tax)
+   ================================================================ */
+const AREAS=[
+{id:'housing',emoji:'🏠',title:'Housing',range:'$50–$800/mo',
+ why:'The biggest line item in almost every budget — small % wins are huge $ wins.',
+ steps:[
+  {id:'h1',text:'Calculate housing as % of take-home (target ≤ 30%)',tip:'Rent/mortgage + tax + insurance + HOA + utilities. Knowing the number is step zero.',est:0,type:'spend',quick:true},
+  {id:'h2',text:'Re-shop homeowners / renters insurance with 3+ quotes',tip:'Loyalty is penalized. 20 minutes once a year routinely saves $200–500/yr.',est:30,type:'spend',quick:true},
+  {id:'h3',text:'Run the refinance / recast math on your mortgage',tip:'Worth checking any time rates move. A recast is cheap if you have a lump sum.',est:120,type:'spend'},
+  {id:'h4',text:'Appeal your property tax assessment',tip:'Comparable-sales appeals succeed surprisingly often and lock in savings for years.',est:40,type:'spend'},
+  {id:'h5',text:'House-hack: rent a room, storage, parking, or ADU',tip:'Even part-time (seasonal, student, travel-nurse) income counts against the biggest bill.',est:300,type:'spend'},
+  {id:'h6',text:'Run the honest numbers on downsizing or relocating',tip:'You don’t have to do it — but know exactly what staying costs you per year.',est:400,type:'spend'},
+ ]},
+{id:'transport',emoji:'🚗',title:'Transportation',range:'$40–$600/mo',
+ why:'The #2 budget line, and mostly invisible: depreciation, insurance, interest.',
+ steps:[
+  {id:'t1',text:'Re-shop auto insurance with 3 quotes + raise deductible',tip:'Bundle with home for extra discount. Re-quote every renewal, not every decade.',est:40,type:'spend',quick:true},
+  {id:'t2',text:'Drive the paid-off car longer — invest the "payment"',tip:'The average car payment is $500+/mo. A reliable 10-year-old car is a wealth machine.',est:250,type:'spend'},
+  {id:'t3',text:'Test-drive being a one-car household for a month',tip:'Insurance + registration + maintenance + depreciation on car #2 adds up fast.',est:350,type:'spend'},
+  {id:'t4',text:'Switch to pay-per-mile insurance if you drive < 8k mi/yr',tip:'Remote workers and city dwellers often overpay for miles they never drive.',est:25,type:'spend'},
+  {id:'t5',text:'DIY the easy maintenance: wipers, filters, bulbs',tip:'10-minute YouTube jobs the shop charges $60+ labor for.',est:15,type:'spend',quick:true},
+  {id:'t6',text:'Combine errands into one trip; bike/walk the short hops',tip:'Fuel and wear scale with cold starts and stop-and-go, not just miles.',est:30,type:'spend'},
+ ]},
+{id:'food',emoji:'🍳',title:'Food & groceries',range:'$60–$400/mo',
+ why:'The most controllable big category — and where lifestyle creep hides best.',
+ steps:[
+  {id:'f1',text:'Plan the week’s meals before you shop',tip:'The single highest-leverage food habit. 15 minutes on Sunday.',est:60,type:'spend',quick:true},
+  {id:'f2',text:'Shop with a list and a price-per-unit habit',tip:'Unit price is on the shelf tag. Store brands are usually the same factory.',est:40,type:'spend',quick:true},
+  {id:'f3',text:'Delete the delivery apps (or hard-cap them)',tip:'Delivery ≈ 1.7–2× the menu price after fees, markup, and tip.',est:90,type:'spend',quick:true},
+  {id:'f4',text:'Batch-cook twice a week; freeze the extras',tip:'Future-you at 6pm on Thursday makes expensive decisions. Pre-empt them.',est:50,type:'spend'},
+  {id:'f5',text:'Make eating out intentional: a set budget, not a default',tip:'Keep the meals you love, cut the ones that were just logistics failures.',est:60,type:'spend'},
+  {id:'f6',text:'Use a flat cashback / grocery-rewards card (paid in full)',tip:'2% on everything you were buying anyway. Only if you never carry a balance.',est:20,type:'spend'},
+ ]},
+{id:'subs',emoji:'📱',title:'Subscriptions & bills',range:'$40–$250/mo',
+ why:'Recurring charges are designed to be forgotten. Audit them, then automate the wins.',
+ steps:[
+  {id:'s1',text:'Pull 90 days of statements; list every recurring charge',tip:'You will find at least one thing you forgot existed. Everyone does.',est:0,type:'spend',quick:true},
+  {id:'s2',text:'Cancel anything you haven’t used in 30 days',tip:'You can always re-subscribe. You almost never will.',est:45,type:'spend',quick:true},
+  {id:'s3',text:'Switch phone plans to an MVNO',tip:'Same towers, half (or a third) of the price. Porting takes an afternoon.',est:60,type:'spend',quick:true},
+  {id:'s4',text:'Negotiate or downgrade internet; re-quote yearly',tip:'Ask for the "new customer" rate or the retention department. Works most of the time.',est:25,type:'spend',quick:true},
+  {id:'s5',text:'Rotate streaming: one service at a time, binge & pause',tip:'Everything comes back. You’re not going to run out of television.',est:25,type:'spend',quick:true},
+  {id:'s6',text:'Move to annual billing where it’s genuinely cheaper',tip:'Often 15–20% off — but only for things that survived the audit above.',est:10,type:'spend'},
+ ]},
+{id:'tax',emoji:'🧾',title:'Taxes & accounts',range:'$100–$500/mo equivalent',
+ why:'The highest-return "spending" you’ll ever cut is the tax you didn’t have to pay.',
+ steps:[
+  {id:'x1',text:'Capture the FULL employer 401(k) match',tip:'A 50–100% instant, guaranteed return. Nothing else in finance comes close.',est:150,type:'boost',quick:true},
+  {id:'x2',text:'Max the HSA if you’re eligible',tip:'Triple tax advantage: deductible in, grows tax-free, tax-free out for medical.',est:80,type:'boost'},
+  {id:'x3',text:'Fund an IRA (Roth or traditional) every year',tip:'Pick Roth if you expect higher taxes later; traditional if lower. Either beats neither.',est:100,type:'boost'},
+  {id:'x4',text:'Use the FSA / dependent-care dollars you’re leaving behind',tip:'Pre-tax childcare and medical money — commonly unclaimed.',est:40,type:'boost'},
+  {id:'x5',text:'Check your withholding — a big refund is a 0% loan to the IRS',tip:'Aim near zero. Put the difference to work every month instead of once in April.',est:0,type:'boost',quick:true},
+  {id:'x6',text:'Learn tax-loss / tax-gain harvesting basics for taxable accounts',tip:'A few deliberate December moves can be worth real money at your bracket.',est:25,type:'boost'},
+ ]},
+{id:'fees',emoji:'📉',title:'Investment fees',range:'$25–$300/mo equivalent',
+ why:'A 1% fee sounds tiny and quietly eats ~25% of a 40-year portfolio.',
+ steps:[
+  {id:'v1',text:'Audit every fund’s expense ratio — target under 0.10%',tip:'Look up each ticker. Anything near 1% has a near-identical index twin at 0.03%.',est:40,type:'boost',quick:true},
+  {id:'v2',text:'Fire the %-of-assets advisor (or switch to flat-fee/hourly)',tip:'1% AUM on $500k is $5,000/yr, every year, for a rebalance you can automate.',est:120,type:'boost'},
+  {id:'v3',text:'Roll old 401(k)s into one low-fee home',tip:'Orphan 401(k)s often carry extra admin fees and terrible fund menus.',est:20,type:'boost'},
+  {id:'v4',text:'Simplify to a 2–4 fund index portfolio you actually understand',tip:'Total market + international + bonds covers it. Complexity is a fee magnet.',est:0,type:'boost'},
+  {id:'v5',text:'Put the right assets in the right accounts (asset location)',tip:'Bonds/REITs in tax-advantaged, index equities in taxable. Free basis points.',est:15,type:'boost'},
+ ]},
+{id:'debt',emoji:'💳',title:'Debt & interest',range:'$50–$400/mo',
+ why:'Paying 22% APR while investing for 7% is running up the down escalator.',
+ steps:[
+  {id:'d1',text:'List every debt: balance, APR, minimum',tip:'One table. The clarity alone changes behavior.',est:0,type:'spend',quick:true},
+  {id:'d2',text:'Avalanche the highest APR first',tip:'Mathematically optimal. (Snowball smallest-first if you need the wins — done beats perfect.)',est:80,type:'spend'},
+  {id:'d3',text:'Refinance or 0% balance-transfer the expensive debt',tip:'A 3–5% transfer fee beats months at 24% APR. Read the after-promo rate.',est:60,type:'spend'},
+  {id:'d4',text:'Turn on autopay everywhere a rate discount exists',tip:'Many student and auto loans give 0.25% off just for autopay. Free money.',est:10,type:'spend',quick:true},
+  {id:'d5',text:'Pull your free credit reports and fix errors',tip:'Your score prices every future loan and some insurance. Errors are common.',est:0,type:'spend',quick:true},
+ ]},
+{id:'utility',emoji:'⚡',title:'Utilities & energy',range:'$20–$120/mo',
+ why:'Small individually, but set-and-forget: fix once, save every month forever.',
+ steps:[
+  {id:'u1',text:'Program the thermostat (setback at night and away)',tip:'≈ 1–3% per degree of setback over 8 hours. The classic for a reason.',est:20,type:'spend',quick:true},
+  {id:'u2',text:'Finish the LED swap; put vampire loads on switched strips',tip:'Media centers and chargers draw 24/7. A $10 strip fixes it forever.',est:10,type:'spend',quick:true},
+  {id:'u3',text:'Shop your electricity/gas supplier if your market is deregulated',tip:'Default utility rates are rarely the best rate. Compare once a year.',est:25,type:'spend'},
+  {id:'u4',text:'Water heater to 120°F; wash clothes cold',tip:'Water heating is ~15–18% of home energy. Modern detergents don’t need hot.',est:10,type:'spend',quick:true},
+  {id:'u5',text:'Weatherstrip doors & windows before peak season',tip:'A $25 Saturday project that pays back in the first season.',est:15,type:'spend'},
+ ]},
+{id:'insure',emoji:'🛡️',title:'Insurance tune-up',range:'$30–$200/mo',
+ why:'Insure the catastrophes, not the inconveniences — and never auto-renew blind.',
+ steps:[
+  {id:'i1',text:'Re-shop auto + home together at every renewal',tip:'The single most reliable recurring win in personal finance.',est:45,type:'spend',quick:true},
+  {id:'i2',text:'Raise deductibles once your emergency fund covers them',tip:'You’re self-insured for small stuff anyway — stop paying for the privilege.',est:30,type:'spend'},
+  {id:'i3',text:'Replace whole/universal life with cheap term (if you need coverage at all)',tip:'Term is ~10× cheaper for the same death benefit. Invest the difference.',est:80,type:'spend'},
+  {id:'i4',text:'Drop coverage you don’t need: rental car, phone, extended warranties',tip:'These exist because they’re profitable — for the seller.',est:15,type:'spend',quick:true},
+  {id:'i5',text:'Price an umbrella policy as your net worth grows',tip:'~$200–400/yr for $1M of protection. Cheap insurance for people building wealth.',est:0,type:'spend'},
+ ]},
+{id:'life',emoji:'🎯',title:'Lifestyle design',range:'$30–$300/mo',
+ why:'The goal isn’t deprivation — it’s spending only on what you actually value.',
+ steps:[
+  {id:'l1',text:'30-day list for any non-essential purchase over $50',tip:'Write it down with the date. Most wants quietly expire. Buy what survives, guilt-free.',est:60,type:'spend',quick:true},
+  {id:'l2',text:'Price things in hours of your life, not dollars',tip:'A $300 gadget at $25/hr take-home = 12 hours of work. Still worth it? Sometimes yes!',est:0,type:'spend',quick:true},
+  {id:'l3',text:'Buy used first: marketplace, refurb, library',tip:'Someone else already paid the depreciation. Especially tools, furniture, kid gear.',est:40,type:'spend'},
+  {id:'l4',text:'Swap one paid habit for a free one you love more',tip:'Trail runs for spin classes, potlucks for restaurants, library for bookstore.',est:30,type:'spend'},
+  {id:'l5',text:'Plan travel around points and shoulder season, not impulse',tip:'Same trip, 40% off, smaller crowds. Flexibility is the real currency.',est:50,type:'spend'},
+ ]},
+];
+
+/* ================== state ================== */
+const LS_KEY='fireside-v1';
+const DEFAULTS={
+  inputs:{income:6500,spend:4800,assets:120000,ret:5,swr:4},
+  steps:{},        // id -> {done, est}
+  custom:{},       // areaId -> [{id,text,type}]
+  notes:{},        // areaId -> string
+  open:{},         // areaId -> bool
+  theme:'auto', tab:'dash', filter:'all',
+};
+let state=load();
+function load(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return structuredClone(DEFAULTS);
+    const s=JSON.parse(raw);
+    return Object.assign(structuredClone(DEFAULTS),s,{inputs:Object.assign({},DEFAULTS.inputs,s.inputs)});
+  }catch(e){return structuredClone(DEFAULTS)}
+}
+function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+const uid=()=> 'c'+Math.random().toString(36).slice(2,9);
+
+function allSteps(area){
+  const custom=(state.custom[area.id]||[]).map(c=>({...c,tip:'Your own step.',est:0,custom:true}));
+  return area.steps.concat(custom);
+}
+function stepState(step){
+  if(!state.steps[step.id]) state.steps[step.id]={done:false,est:step.est||0};
+  return state.steps[step.id];
+}
+
+/* ================== math ================== */
+function num(v){const n=parseFloat(v);return isFinite(n)?n:0}
+function yearsToFI(assets,contribMo,target,annualRet){
+  if(target<=0)return 0;
+  if(assets>=target)return 0;
+  const i=annualRet/12;
+  if(i<=0){
+    if(contribMo<=0)return Infinity;
+    return (target-assets)/(contribMo*12);
+  }
+  const a=assets+contribMo/i, f=target+contribMo/i;
+  if(a<=0||f/a<=0)return Infinity;
+  const n=Math.log(f/a)/Math.log(1+i);
+  return n>0?n/12:Infinity;
+}
+function project(assets,contribMo,annualRet,nYears){
+  const pts=[assets];const i=annualRet/12;let v=assets;
+  for(let y=1;y<=nYears;y++){
+    for(let m=0;m<12;m++){v=v*(1+i)+contribMo}
+    pts.push(v);
+  }
+  return pts;
+}
+function calc(){
+  const inp=state.inputs;
+  const income=num(inp.income),spend=num(inp.spend),assets=num(inp.assets);
+  const r=num(inp.ret)/100,swr=num(inp.swr)/100;
+  let spendCut=0,boost=0,done=0,total=0,potential=0;
+  for(const a of AREAS)for(const s of allSteps(a)){
+    total++;
+    const st=stepState(s);
+    if(st.done){done++;if(s.type==='boost')boost+=num(st.est);else spendCut+=num(st.est)}
+    else potential+=num(st.est);
+  }
+  spendCut=Math.min(spendCut,spend);
+  const baseContrib=income-spend;
+  const baseTarget=swr>0?spend*12/swr:Infinity;
+  const baseYears=yearsToFI(assets,baseContrib,baseTarget,r);
+  const optSpend=spend-spendCut;
+  const optContrib=income-optSpend+boost;
+  const optTarget=swr>0?optSpend*12/swr:Infinity;
+  const optYears=yearsToFI(assets,optContrib,optTarget,r);
+  return {income,spend,assets,r,swr,spendCut,boost,done,total,potential,
+    baseContrib,baseTarget,baseYears,optSpend,optContrib,optTarget,optYears};
+}
+
+/* ================== formatting ================== */
+function fmt$(n){
+  if(!isFinite(n))return'—';
+  return '$'+Math.round(n).toLocaleString('en-US');
+}
+function fmtC(n){ // compact
+  if(!isFinite(n))return'—';
+  const a=Math.abs(n);
+  if(a>=1e6)return '$'+(n/1e6).toFixed(a>=1e7?0:1)+'M';
+  if(a>=1e3)return '$'+Math.round(n/1e3)+'k';
+  return '$'+Math.round(n);
+}
+function fmtY(y){
+  if(!isFinite(y))return '—';
+  if(y<=0)return 'Now 🎉';
+  if(y>99)return '99+ yrs';
+  return y.toFixed(1)+' yrs';
+}
+function fmtPct(p){return isFinite(p)?Math.round(p*100)+'%':'—'}
+
+/* ================== dashboard render ================== */
+function renderTiles(c){
+  const savingsBase=c.income>0?c.baseContrib/c.income:0;
+  const savingsOpt=c.income>0?c.optContrib/c.income:0;
+  const prog=isFinite(c.optTarget)&&c.optTarget>0?c.assets/c.optTarget:0;
+  const shaved=(isFinite(c.baseYears)&&isFinite(c.optYears))?c.baseYears-c.optYears:0;
+  const found=c.spendCut+c.boost;
+  document.getElementById('fi-banner').style.display=(c.optYears<=0&&c.assets>0)?'block':'none';
+  const tiles=[
+    {lbl:'Years to FI',val:fmtY(c.optYears),
+     delta:shaved>0.05?('▲ '+shaved.toFixed(1)+' yrs sooner than current plan'):'Check off steps to pull this closer',cls:shaved>0.05?'up':''},
+    {lbl:'FIRE number',val:fmtC(c.optTarget),
+     delta:c.spendCut>0?('▼ '+fmt$(c.baseTarget-c.optTarget)+' smaller than before'):(fmt$(c.optTarget)+' = 12 × spend ÷ SWR'),cls:c.spendCut>0?'up':''},
+    {lbl:'Savings rate',val:fmtPct(savingsOpt),
+     delta:savingsOpt>savingsBase+0.001?('up from '+fmtPct(savingsBase)):'income − spending, ÷ income',cls:savingsOpt>savingsBase+0.001?'up':''},
+    {lbl:'Progress to FI',val:fmtPct(Math.min(prog,1)),
+     delta:fmt$(c.assets)+' of '+fmtC(c.optTarget),cls:''},
+    {lbl:'Optimizations found',val:fmt$(found)+'/mo',
+     delta:c.potential>0?(fmt$(c.potential)+'/mo still on the table →'):'every step checked — legend 🏆',cls:''},
+  ];
+  document.getElementById('tiles').innerHTML=tiles.map(t=>
+    `<div class="tile"><div class="lbl">${t.lbl}</div><div class="val">${t.val}</div><div class="delta ${t.cls}">${t.delta}</div></div>`
+  ).join('');
+}
+function renderInsight(c){
+  const per100=c.swr>0?100*12/c.swr:0;
+  document.getElementById('insight').innerHTML=
+    `<span class="em">💡</span><span><b>Every $100/mo you trim does double duty:</b> it’s $100 more invested every month <i>and</i> about ${fmtC(per100)} you no longer need in the portfolio at a ${(c.swr*100).toFixed(2).replace(/\.?0+$/,'')}% withdrawal rate. Cutting spending beats raising income dollar-for-dollar — no extra tax, no extra hours.</span>`;
+}
+
+/* ================== chart ================== */
+function renderChart(c){
+  const box=document.getElementById('chart-box');
+  const old=box.querySelector('svg');if(old)old.remove();
+  const finiteYears=[c.baseYears,c.optYears].filter(y=>isFinite(y)&&y>0);
+  const H=Math.max(10,Math.min(50,Math.ceil(finiteYears.length?Math.max(...finiteYears):15)+4));
+  const base=project(c.assets,c.baseContrib,c.r,H);
+  const opt=project(c.assets,c.optContrib,c.r,H);
+  const rawMax=Math.max(...base,...opt,isFinite(c.baseTarget)?c.baseTarget:0,isFinite(c.optTarget)?c.optTarget:0,1)*1.06;
+  // nice round tick step, then extend max to the last tick
+  const rough=rawMax/5,mag=Math.pow(10,Math.floor(Math.log10(rough)));
+  const norm=rough/mag,tick=(norm<=1?1:norm<=2?2:norm<=2.5?2.5:norm<=5?5:10)*mag;
+  const yMax=Math.ceil(rawMax/tick)*tick;
+  const W=960,Hpx=380,padL=64,padR=110,padT=18,padB=34;
+  const iw=W-padL-padR,ih=Hpx-padT-padB;
+  const X=y=>padL+iw*(y/H);
+  const Y=v=>padT+ih*(1-Math.max(0,v)/yMax);
+  const path=pts=>pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  // gridlines at nice round values
+  let grid='',ylab='';
+  for(let v=0;v<=yMax+tick/2;v+=tick){
+    const y=Y(v).toFixed(1);
+    grid+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+    ylab+=`<text x="${padL-8}" y="${+y+4}" text-anchor="end" font-size="11" fill="var(--ink-mut)">${fmtC(v)}</text>`;
+  }
+  let xlab='';
+  const xstep=H<=12?2:(H<=24?4:(H<=36?6:10));
+  for(let y=0;y<=H;y+=xstep){
+    xlab+=`<text x="${X(y)}" y="${Hpx-10}" text-anchor="middle" font-size="11" fill="var(--ink-mut)">${y===0?'now':'+'+y+'y'}</text>`;
+  }
+  // target lines + FI dots
+  const targets=[
+    {t:c.baseTarget,yrs:c.baseYears,col:'var(--series-1)',name:'Current plan'},
+    {t:c.optTarget,yrs:c.optYears,col:'var(--series-2)',name:'Optimized'},
+  ];
+  let tgt='',dots='';
+  for(const s of targets){
+    if(!isFinite(s.t))continue;
+    const y=Y(s.t).toFixed(1);
+    tgt+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${s.col}" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.45"/>`;
+    if(isFinite(s.yrs)&&s.yrs<=H){
+      const x=X(s.yrs).toFixed(1);
+      dots+=`<circle cx="${x}" cy="${y}" r="6.5" fill="var(--surface)"/><circle cx="${x}" cy="${y}" r="4.5" fill="${s.col}"/>`+
+        `<text x="${x}" y="${+y-12}" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink-2)">FI in ${s.yrs<=0?'0':s.yrs.toFixed(1)}y</text>`;
+    }
+  }
+  // direct labels at line ends
+  const endLab=(pts,col,name,dy)=>`<text x="${W-padR+8}" y="${(Y(pts[pts.length-1])+dy).toFixed(1)}" font-size="11.5" font-weight="700" fill="${col}">${name}</text>`;
+  let e1=Y(base[base.length-1]),e2=Y(opt[opt.length-1]);
+  let d1=4,d2=4;
+  if(Math.abs(e1-e2)<14){if(e2<=e1){d2=-4;d1=12}else{d1=-4;d2=12}}
+  const svg=`<svg viewBox="0 0 ${W} ${Hpx}" role="img" aria-label="Projected invested assets over ${H} years for current and optimized plans">
+    ${grid}${tgt}
+    <line x1="${padL}" y1="${padT+ih}" x2="${W-padR}" y2="${padT+ih}" stroke="var(--axis)" stroke-width="1"/>
+    ${ylab}${xlab}
+    <path d="${path(base)}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="${path(opt)}" fill="none" stroke="var(--series-2)" stroke-width="2" stroke-linejoin="round"/>
+    ${endLab(base,'var(--series-1)','Current plan',d1)}
+    ${endLab(opt,'var(--series-2)','Optimized',d2)}
+    ${dots}
+    <line id="xhair" x1="0" y1="${padT}" x2="0" y2="${padT+ih}" stroke="var(--axis)" stroke-width="1" opacity="0"/>
+  </svg>`;
+  box.insertAdjacentHTML('beforeend',svg);
+  // table view
+  const rowStep=Math.max(1,Math.round(H/12));
+  let rows='';
+  for(let y=0;y<=H;y+=rowStep){
+    rows+=`<tr><td>${y===0?'Now':'Year '+y}</td><td>${fmt$(base[y])}</td><td>${fmt$(opt[y])}</td></tr>`;
+  }
+  document.getElementById('chart-table').innerHTML=
+    `<table><thead><tr><th>Year</th><th>Current plan</th><th>Optimized</th></tr></thead><tbody>${rows}</tbody></table>`;
+  // hover layer
+  const svgEl=box.querySelector('svg'),tt=document.getElementById('tooltip'),xh=svgEl.querySelector('#xhair');
+  function onMove(ev){
+    const r=svgEl.getBoundingClientRect();
+    const px=(ev.clientX-r.left)*(W/r.width);
+    if(px<padL||px>W-padR){onLeave();return}
+    const yr=Math.round((px-padL)/iw*H);
+    const x=X(yr);
+    xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.setAttribute('opacity','1');
+    tt.style.display='block';
+    tt.innerHTML=`<div class="tt-y">${yr===0?'Now':'Year '+yr}</div>`+
+      `<div class="row"><span><i class="swatch" style="background:var(--series-1);width:9px;height:9px"></i> Current</span><b>${fmt$(base[yr])}</b></div>`+
+      `<div class="row"><span><i class="swatch" style="background:var(--series-2);width:9px;height:9px"></i> Optimized</span><b>${fmt$(opt[yr])}</b></div>`;
+    const bx=box.getBoundingClientRect();
+    let left=(x/W)*bx.width+14;
+    if(left+tt.offsetWidth>bx.width-8)left=(x/W)*bx.width-tt.offsetWidth-14;
+    tt.style.left=left+'px';
+    tt.style.top=Math.max(4,(ev.clientY-bx.top)-tt.offsetHeight-12)+'px';
+  }
+  function onLeave(){tt.style.display='none';xh.setAttribute('opacity','0')}
+  svgEl.addEventListener('mousemove',onMove);
+  svgEl.addEventListener('mouseleave',onLeave);
+}
+
+/* ================== optimize render ================== */
+function renderImpact(c){
+  const shaved=(isFinite(c.baseYears)&&isFinite(c.optYears))?Math.max(0,c.baseYears-c.optYears):0;
+  document.getElementById('impact-bar').innerHTML=`
+    <div class="stat"><div class="lbl">Steps done</div><div class="val">${c.done}/${c.total}</div></div>
+    <div class="stat"><div class="lbl">Spending trimmed</div><div class="val good">${fmt$(c.spendCut)}/mo</div></div>
+    <div class="stat"><div class="lbl">Extra invested</div><div class="val good">+${fmt$(c.boost)}/mo</div></div>
+    <div class="stat"><div class="lbl">FIRE # reduced by</div><div class="val good">${fmt$(Math.max(0,c.baseTarget-c.optTarget))}</div></div>
+    <div class="stat"><div class="lbl">FI sooner by</div><div class="val good">${shaved>0.05?shaved.toFixed(1)+' yrs':'—'}</div></div>
+    <div class="spark">${c.potential>0?fmt$(c.potential)+'/mo of potential still unchecked. Tune each estimate to <i>your</i> real numbers.':'Every estimate checked. Revisit yearly — prices drift back.'}</div>`;
+  document.getElementById('opt-count').textContent=c.done+'/'+c.total;
+}
+function stepVisible(step,st){
+  const f=state.filter;
+  if(f==='all')return true;
+  if(f==='todo')return!st.done;
+  if(f==='done')return st.done;
+  if(f==='quick')return!!step.quick&&!st.done;
+  return true;
+}
+function renderAreas(){
+  const root=document.getElementById('areas');
+  root.innerHTML=AREAS.map(area=>{
+    const steps=allSteps(area);
+    const doneN=steps.filter(s=>stepState(s).done).length;
+    const pct=steps.length?Math.round(doneN/steps.length*100):0;
+    const complete=doneN===steps.length&&steps.length>0;
+    const open=!!state.open[area.id];
+    const visSteps=steps.filter(s=>stepVisible(s,stepState(s)));
+    const potentialLeft=steps.filter(s=>!stepState(s).done).reduce((a,s)=>a+num(stepState(s).est),0);
+    const stepsHtml=visSteps.length?visSteps.map(s=>{
+      const st=stepState(s);
+      return `<div class="step ${st.done?'done':''}" data-step="${s.id}">
+        <input type="checkbox" ${st.done?'checked':''} data-act="toggle" data-id="${s.id}" data-area="${area.id}" aria-label="Done: ${esc(s.text)}">
+        <div class="body">
+          <div class="txt">${esc(s.text)}<span class="badges">${s.quick?'<span class="badge quick">⚡ quick win</span>':''}${s.type==='boost'?'<span class="badge boost">invests more</span>':''}</span></div>
+          <div class="tip">${esc(s.tip)}</div>
+        </div>
+        <div class="est">
+          <label>${s.type==='boost'?'invest/mo':'save/mo'}</label>
+          <span class="inwrap"><span class="pre">$</span><input type="number" min="0" step="5" value="${num(st.est)}" data-act="est" data-id="${s.id}" aria-label="Estimated monthly ${s.type==='boost'?'investment':'savings'} for: ${esc(s.text)}"></span>
+        </div>
+        ${s.custom?`<button class="del" data-act="del" data-id="${s.id}" data-area="${area.id}" title="Remove this step">✕</button>`:''}
+      </div>`;
+    }).join(''):`<p style="color:var(--ink-mut);font-size:.85rem;margin:10px 0">Nothing matches this filter here.</p>`;
+    return `<div class="area ${open?'open':''} ${complete?'done':''}" data-area="${area.id}">
+      <button class="area-head" data-act="open" data-area="${area.id}" aria-expanded="${open}">
+        <span class="em">${area.emoji}</span>
+        <span><span class="ttl">${area.title}${complete?' ✅':''}</span><div class="why">${area.why}</div></span>
+        <span class="meta">
+          <div class="pct">${doneN}/${steps.length} · ${pct}%</div>
+          <div class="rng">${complete?'complete!':('typ. '+area.range+(potentialLeft?` · ${fmt$(potentialLeft)} left`:''))}</div>
+        </span>
+        <span class="car">▶</span>
+      </button>
+      <div class="pbar"><i style="width:${pct}%"></i></div>
+      <div class="area-body">
+        ${stepsHtml}
+        <div class="add-step">
+          <input type="text" placeholder="Add your own step for ${area.title.toLowerCase()}…" data-addinput="${area.id}" maxlength="120">
+          <button class="mini" data-act="add" data-area="${area.id}">+ Add</button>
+        </div>
+        <div class="area-notes">
+          <label for="notes-${area.id}">Notes</label>
+          <textarea id="notes-${area.id}" data-notes="${area.id}" placeholder="Quotes you got, numbers you found, who to call…">${esc(state.notes[area.id]||'')}</textarea>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+/* ================== master render ================== */
+function renderAll(opts){
+  const c=calc();
+  renderTiles(c);renderInsight(c);renderChart(c);
+  renderImpact(c);
+  if(!opts||!opts.skipAreas)renderAreas();
+}
+
+/* ================== events ================== */
+// tabs
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  state.tab=b.dataset.tab;persist();applyTab();
+}));
+function applyTab(){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===state.tab)));
+  document.getElementById('tab-dash').hidden=state.tab!=='dash';
+  document.getElementById('tab-opt').hidden=state.tab!=='opt';
+}
+// dashboard inputs
+document.querySelectorAll('.num-grid input').forEach(inp=>{
+  inp.addEventListener('change',()=>{
+    state.inputs[inp.dataset.key]=num(inp.value);
+    persist();renderAll({skipAreas:false});
+  });
+});
+function fillInputs(){
+  document.querySelectorAll('.num-grid input').forEach(inp=>{inp.value=state.inputs[inp.dataset.key]});
+}
+// filter chips
+document.getElementById('chips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  state.filter=b.dataset.filter;persist();
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));
+  renderAreas();
+});
+// optimize interactions (delegated)
+document.getElementById('areas').addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const act=el.dataset.act;
+  if(act==='open'){
+    const id=el.dataset.area;state.open[id]=!state.open[id];persist();renderAreas();
+  }else if(act==='toggle'){
+    const id=el.dataset.id,areaId=el.dataset.area;
+    const st=state.steps[id];st.done=el.checked;persist();
+    if(el.checked){
+      const area=AREAS.find(a=>a.id===areaId);
+      const steps=allSteps(area);
+      const allDone=steps.every(s=>stepState(s).done);
+      if(allDone){toast(`${area.emoji} ${area.title}: fully optimized! Legendary.`);confetti(140)}
+      else{const est=num(st.est);toast(est>0?`Nice — ${fmt$(est)}/mo found! 🔥`:'Checked off! Knowledge is leverage. 🔥');confetti(est>=100?70:25)}
+    }
+    renderAll();
+  }else if(act==='add'){
+    const areaId=el.dataset.area;
+    const input=document.querySelector(`[data-addinput="${areaId}"]`);
+    const text=(input.value||'').trim();
+    if(!text){input.focus();return}
+    const id=uid();
+    (state.custom[areaId]=state.custom[areaId]||[]).push({id,text,type:'spend',quick:false});
+    state.steps[id]={done:false,est:0};
+    state.open[areaId]=true;persist();
+    toast('Step added ✍️');renderAll();
+  }else if(act==='del'){
+    const id=el.dataset.id,areaId=el.dataset.area;
+    state.custom[areaId]=(state.custom[areaId]||[]).filter(s=>s.id!==id);
+    delete state.steps[id];persist();renderAll();
+  }
+});
+document.getElementById('areas').addEventListener('change',e=>{
+  const el=e.target;
+  if(el.dataset.act==='est'){
+    const st=state.steps[el.dataset.id];
+    st.est=Math.max(0,num(el.value));el.value=st.est;
+    persist();
+    const c=calc();renderTiles(c);renderInsight(c);renderChart(c);renderImpact(c);
+    // refresh header numbers of the containing area without nuking focus context
+    renderAreas();
+  }
+});
+document.getElementById('areas').addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.notes!==undefined&&el.dataset.notes!==''){
+    state.notes[el.dataset.notes]=el.value;persistDebounced();
+  }
+});
+document.getElementById('areas').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.addinput){
+    e.preventDefault();
+    const btn=document.querySelector(`[data-act="add"][data-area="${e.target.dataset.addinput}"]`);
+    if(btn)btn.click();
+  }
+});
+let _pt=null;
+function persistDebounced(){clearTimeout(_pt);_pt=setTimeout(persist,400)}
+
+// theme
+document.getElementById('btn-theme').addEventListener('click',()=>{
+  const order=['auto','light','dark'];
+  state.theme=order[(order.indexOf(state.theme)+1)%order.length];
+  persist();applyTheme();
+  toast('Theme: '+state.theme);
+  const c=calc();renderChart(c);
+});
+function applyTheme(){
+  if(state.theme==='auto')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',state.theme);
+}
+// export / import
+document.getElementById('btn-export').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fireside-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('Backup saved 💾');
+});
+document.getElementById('btn-import').addEventListener('click',()=>document.getElementById('file-import').click());
+document.getElementById('file-import').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const s=JSON.parse(rd.result);
+      if(!s||typeof s!=='object'||!s.inputs)throw 0;
+      state=Object.assign(structuredClone(DEFAULTS),s,{inputs:Object.assign({},DEFAULTS.inputs,s.inputs)});
+      persist();fillInputs();applyTheme();applyTab();renderAll();
+      toast('Backup loaded 📂');confetti(60);
+    }catch(err){toast('That file doesn’t look like a FIREside backup 😬')}
+  };
+  rd.readAsText(f);
+  e.target.value='';
+});
+// reset
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  if(!confirm('Reset ALL FIREside data on this device? (Save to file first if unsure.)'))return;
+  state=structuredClone(DEFAULTS);persist();
+  fillInputs();applyTheme();applyTab();renderAll();
+  toast('Fresh start ✨');
+});
+
+/* ================== toast & confetti ================== */
+let _tt=null;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2600);
+}
+const cvs=document.getElementById('confetti'),ctx=cvs.getContext('2d');
+let parts=[],raf=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function confetti(n){
+  if(reduced)return;
+  cvs.width=innerWidth;cvs.height=innerHeight;
+  const cols=['#2a78d6','#1baf7a','#eda100','#e87ba4','#4a3aa7','#eb6834'];
+  for(let i=0;i<n;i++)parts.push({
+    x:Math.random()*cvs.width,y:-14-Math.random()*80,
+    vx:(Math.random()-.5)*2.4,vy:2.2+Math.random()*3.2,
+    s:5+Math.random()*6,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.25,
+    c:cols[(Math.random()*cols.length)|0]
+  });
+  if(!raf)tick();
+}
+function tick(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  parts=parts.filter(p=>p.y<cvs.height+20);
+  for(const p of parts){
+    p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);
+    ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.62);
+    ctx.restore();
+  }
+  raf=parts.length?requestAnimationFrame(tick):null;
+}
+
+/* ================== boot ================== */
+applyTheme();applyTab();fillInputs();
+document.querySelectorAll('.chip').forEach(ch=>ch.setAttribute('aria-pressed',String(ch.dataset.filter===state.filter)));
+renderAll();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{const c=calc();renderChart(c)});
+</script>
+</body>
+</html>

@@ -2,6 +2,19 @@
 
 A project using [GitHub Flow](CONTRIBUTING.md) for version control.
 
+## 🔥 FIREside — the money app
+
+A zero-install FIRE (Financial Independence, Retire Early) workspace focused on **optimizing what you already have** instead of chasing more income. Just open [`money.html`](money.html) in any browser.
+
+**What's inside:**
+- **Dashboard** — enter 5 numbers (income, spending, invested assets, expected real return, withdrawal rate) and get live stat tiles: years to FI, FIRE number, savings rate, progress to FI, and optimizations found — plus an interactive projection chart comparing your **current plan vs. optimized plan**, with hover tooltips, FI crossing markers, and a table view
+- **Optimize workspace** — a full interactive checklist across the 10 highest-leverage areas (Housing, Transportation, Food, Subscriptions & bills, Taxes & accounts, Investment fees, Debt & interest, Utilities, Insurance, Lifestyle design), 55+ concrete steps with why-it-matters tips
+- Every step has an **editable $/mo estimate** — check it off and watch your FIRE number shrink and your FI date move closer in real time (a sticky impact bar totals spending trimmed, extra invested, FIRE number reduction, and years shaved)
+- Filters (**to do / ⚡ quick wins / done**), add-your-own steps per area, and a notes field for quotes and numbers you gather
+- Saves automatically on the device (localStorage) with **Save/Load to file** backups, light/dark/auto themes, and confetti when you complete an area 🎉
+
+*Estimates are planning tools, not financial advice.*
+
 ## 🐴 Hoofprints
 
 A super-fun, all-in-one horse journal for young riders — no install, no account, no internet needed. Just open [`index.html`](index.html) in any browser (double-click it!).
