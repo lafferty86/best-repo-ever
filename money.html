@@ -418,8 +418,8 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
 <div class="modal-back" id="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
   <div class="modal">
-    <h2 id="sheet-title">📊 Google Sheet sync <button class="x" id="sheet-close" aria-label="Close">✕</button></h2>
-    <p class="sub">Push your dashboard, checklist, and a progress history to a Google Sheet — and pull it back on any device. One-time setup, ~2 minutes.</p>
+    <h2 id="sheet-title">📊 Google Sheet storage <button class="x" id="sheet-close" aria-label="Close">✕</button></h2>
+    <p class="sub">Use a Google Sheet as FIREside's storage: once connected, the app <b>loads your latest data from the sheet when it opens</b> and <b>saves back automatically after every change</b> — same data on every device, plus live Dashboard, Checklist, and History tabs in the sheet. One-time setup, ~2 minutes.</p>
     <ol>
       <li>Open your Google Sheet → <b>Extensions → Apps Script</b>.</li>
       <li>Delete any starter code, paste the script below, and save.</li>
@@ -441,10 +441,10 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
       </div>
     </div>
     <div class="btnrow">
-      <button class="solid-btn" id="sheet-push">⬆️ Push to Sheet</button>
-      <button class="line-btn" id="sheet-pull">⬇️ Pull from Sheet</button>
+      <button class="solid-btn" id="sheet-push">⬆️ Save to Sheet now</button>
+      <button class="line-btn" id="sheet-pull">⬇️ Load from Sheet now</button>
     </div>
-    <label class="autorow"><input type="checkbox" id="sheet-auto"> Auto-push a few seconds after every change</label>
+    <label class="autorow"><input type="checkbox" id="sheet-auto"> Auto-save to the Sheet a few seconds after every change</label>
     <div id="sheet-status"></div>
     <hr class="divider">
     <p class="sub" style="margin-bottom:8px"><b>No-setup option:</b> download the checklist + summary as CSV and use <i>File → Import</i> in Google Sheets.</p>
@@ -570,6 +570,7 @@ const DEFAULTS={
   open:{},         // areaId -> bool
   theme:'auto', tab:'dash', filter:'all',
   sheet:{url:'',secret:'',auto:false,last:null},
+  mod:0,           // last local data change — newest copy wins across devices
 };
 let state=load();
 function load(){
@@ -583,7 +584,8 @@ function load(){
     });
   }catch(e){return structuredClone(DEFAULTS)}
 }
-function persist(){
+function persist(silent){
+  if(!silent)state.mod=Date.now();
   try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}
   scheduleAutoPush();
 }
@@ -1124,8 +1126,8 @@ async function sheetPush(manual){
     const j=await res.json().catch(()=>null);
     if(res.ok&&j&&j.ok){
       state.sheet.last=Date.now();
-      persist();setSheetStatus(); // _pushing still true → no auto-push re-schedule loop
-      if(manual)toast('Pushed to Google Sheet ✅');
+      persist(true);setSheetStatus(); // silent: bookkeeping only; _pushing still true → no re-schedule loop
+      if(manual)toast('Saved to Google Sheet ✅');
     }else{
       throw new Error((j&&j.error)||('HTTP '+res.status));
     }
@@ -1135,25 +1137,58 @@ async function sheetPush(manual){
   }
   _pushing=false;
 }
+async function sheetFetchState(){
+  const url=(state.sheet.url||'').trim();
+  const sep=url.includes('?')?'&':'?';
+  const res=await fetch(url+sep+'secret='+encodeURIComponent(state.sheet.secret||''));
+  const j=await res.json();
+  if(!j||!j.ok||!j.state||!j.state.inputs)throw new Error((j&&j.error)||'no FIREside data in that sheet yet — Push first');
+  return j.state;
+}
+function applyRemoteState(rs){
+  const keep=Object.assign({},state.sheet,{last:Date.now()});
+  state=Object.assign(structuredClone(DEFAULTS),rs,{
+    inputs:Object.assign({},DEFAULTS.inputs,rs.inputs),
+    sheet:keep,
+  });
+  persist(true); // keep the remote copy's mod timestamp
+  fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
+  setSheetStatus();
+}
 async function sheetPull(){
   const url=(state.sheet.url||'').trim();
   if(!url){toast('Paste your Web app URL first 📊');return}
-  setSheetStatus('Pulling from Google Sheet…');
+  setSheetStatus('Loading from Google Sheet…');
   try{
-    const sep=url.includes('?')?'&':'?';
-    const res=await fetch(url+sep+'secret='+encodeURIComponent(state.sheet.secret||''));
-    const j=await res.json();
-    if(!j||!j.ok||!j.state||!j.state.inputs)throw new Error((j&&j.error)||'no FIREside data in that sheet yet — Push first');
-    const keep=Object.assign({},state.sheet,{last:Date.now()});
-    state=Object.assign(structuredClone(DEFAULTS),j.state,{
-      inputs:Object.assign({},DEFAULTS.inputs,j.state.inputs),
-      sheet:keep,
-    });
-    persist();fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
-    setSheetStatus();toast('Loaded from Google Sheet 📥');confetti(50);
+    applyRemoteState(await sheetFetchState());
+    toast('Loaded from Google Sheet 📥');confetti(50);
   }catch(err){
     setSheetStatus('Pull failed: '+err.message,false);
     toast('Sheet pull failed 😬 — see the Sheet panel');
+  }
+}
+/* Sheet-as-storage: on open, adopt whichever copy is newest.
+   Remote newer → load it here; local newer (or sheet empty) → save it up. */
+async function bootSync(){
+  if(!(state.sheet.url||'').trim())return;
+  setSheetStatus('Checking your Google Sheet…');
+  try{
+    let remote=null;
+    try{remote=await sheetFetchState()}
+    catch(e){
+      // network trouble → offline note; an "empty sheet" app-level reply → seed it below
+      if(!/no (FIREside )?data/i.test(e.message||''))throw e; // matches the bridge's "no data pushed yet"
+    }
+    if(remote&&(remote.mod||0)>(state.mod||0)){
+      applyRemoteState(remote);
+      toast('Loaded your latest from Google Sheet ☁️');
+    }else if(!remote||(state.mod||0)>(remote.mod||0)){
+      await sheetPush(false);
+    }else{
+      setSheetStatus();
+    }
+  }catch(err){
+    setSheetStatus('Offline — using the copy on this device. Changes sync next time it connects.',false);
   }
 }
 function exportCSV(){
@@ -1191,11 +1226,16 @@ document.getElementById('gs-copy').addEventListener('click',e=>{
     ()=>{const r=document.createRange();r.selectNodeContents(document.getElementById('gs-code'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('Select + copy the highlighted code')}
   );
 });
-document.getElementById('sheet-url').addEventListener('change',e=>{state.sheet.url=e.target.value.trim();persist();setSheetStatus()});
-document.getElementById('sheet-secret').addEventListener('change',e=>{state.sheet.secret=e.target.value;persist()});
+document.getElementById('sheet-url').addEventListener('change',e=>{
+  const had=!!state.sheet.url;
+  state.sheet.url=e.target.value.trim();
+  if(state.sheet.url&&!had){state.sheet.auto=true;toast('Connected — auto-save to your Sheet is on ☁️')}
+  persist(true);fillSheetUI();
+});
+document.getElementById('sheet-secret').addEventListener('change',e=>{state.sheet.secret=e.target.value;persist(true)});
 document.getElementById('sheet-auto').addEventListener('change',e=>{
-  state.sheet.auto=e.target.checked;persist();
-  toast(state.sheet.auto?'Auto-push on ✨ (a few seconds after each change)':'Auto-push off');
+  state.sheet.auto=e.target.checked;persist(true);
+  toast(state.sheet.auto?'Auto-save on ☁️ (a few seconds after each change)':'Auto-save off — use Save to Sheet now');
 });
 document.getElementById('sheet-push').addEventListener('click',()=>sheetPush(true));
 document.getElementById('sheet-pull').addEventListener('click',sheetPull);
@@ -1239,6 +1279,7 @@ function tick(){
 applyTheme();applyTab();fillInputs();fillSheetUI();
 document.querySelectorAll('.chip').forEach(ch=>ch.setAttribute('aria-pressed',String(ch.dataset.filter===state.filter)));
 renderAll();
+bootSync();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{const c=calc();renderChart(c)});
 </script>
 </body>
