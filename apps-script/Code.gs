@@ -81,6 +81,9 @@ function writeReadableTabs_(ss, d) {
   (d.horses || []).forEach(function (h) { horseNames[h.id] = h.name; });
   var MOODS = { 1: 'Sleepy 😴', 2: 'Okay 🙂', 3: 'Good 😊', 4: 'Amazing 🤩', 5: 'MAGICAL 🦄' };
   var ACTIVITIES = { lesson: 'Lesson 🎓', trail: 'Trail ride 🌲', jumping: 'Jumping 🚧', dressage: 'Dressage 💃', bareback: 'Bareback ⭐', show: 'Horse show 🏆', ground: 'Groundwork 👟', groom: 'Grooming 🧼' };
+  var WEATHERS = { sun: 'Sunny ☀️', cloud: 'Cloudy ⛅', rain: 'Rainy 🌧️', snow: 'Snowy ❄️', wind: 'Windy 🍃' };
+  var CARE = { farrier: 'Farrier 🛠️', vet: 'Vet 🩺', dentist: 'Dentist 🦷', vaccine: 'Vaccine 💉', worming: 'Worming 💊', spa: 'Spa day 🛁', other: 'Other 📋' };
+  var EVENTS = { lesson: 'Lesson 🎓', show: 'Show 🏆', farrier: 'Farrier 🛠️', vet: 'Vet 🩺', camp: 'Camp ⛺', party: 'Fun 🎈', other: 'Other 📌' };
 
   fill_(ss, 'Horses 🐴',
     ['Name', 'Breed', 'Size', 'Coat', 'Personality', 'Favorite treat', 'Notes', 'Has photo'],
@@ -89,10 +92,10 @@ function writeReadableTabs_(ss, d) {
     }));
 
   fill_(ss, 'Rides 📖',
-    ['Date', 'Horse', 'Activity', 'Minutes', 'Mood', 'Best moment', 'Has photo'],
+    ['Date', 'Horse', 'Activity', 'Minutes', 'Mood', 'Weather', 'Best moment', 'Has photo'],
     (d.rides || []).slice().sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); })
       .map(function (r) {
-        return [r.date, horseNames[r.horseId] || '?', ACTIVITIES[r.activity] || r.activity, r.minutes, MOODS[r.mood] || r.mood, r.note, r.photo ? 'yes' : ''];
+        return [r.date, horseNames[r.horseId] || '?', ACTIVITIES[r.activity] || r.activity, r.minutes, MOODS[r.mood] || r.mood, WEATHERS[r.weather] || '', r.note, r.photo ? 'yes' : ''];
       }));
 
   fill_(ss, 'Goals 🎯',
@@ -100,6 +103,20 @@ function writeReadableTabs_(ss, d) {
     (d.goals || []).map(function (g) {
       return [g.title, g.emoji, g.count, g.target, g.done ? 'YES 🎉' : 'not yet', g.doneDate || '', g.note];
     }));
+
+  var careRows = [];
+  (d.horses || []).forEach(function (h) {
+    (h.care || []).forEach(function (c) {
+      careRows.push([c.date, h.name, CARE[c.type] || c.type, c.note || '']);
+    });
+  });
+  careRows.sort(function (a, b) { return String(b[0]).localeCompare(String(a[0])); });
+  fill_(ss, 'Care 🩺', ['Date', 'Horse', 'What', 'Note'], careRows);
+
+  fill_(ss, 'Calendar 🗓️',
+    ['Date', 'What', 'Kind'],
+    (d.events || []).slice().sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); })
+      .map(function (e) { return [e.date, e.title, EVENTS[e.type] || e.type]; }));
 
   fill_(ss, 'Wishlist 🌠',
     ['Wish', 'Kind', 'Why', 'Came true', 'Date'],
