@@ -43,3 +43,19 @@ Hoofprints works fully offline, but you can optionally back the whole barn with 
 - The secret word keeps random strangers out; treat the URL + secret like a house key
 
 If sync isn't set up, everything keeps working exactly as before — saved on the device, with file backup buttons in the footer.
+
+## Make it a real app 📱
+
+Hoofprints is a PWA (installable web app). Once it's hosted, it installs on a phone or tablet with its own rosette icon, opens full-screen like a native app, and works fully offline.
+
+**Host it free with GitHub Pages (one time):**
+
+1. In this repo on GitHub: **Settings → Pages → Source: GitHub Actions**.
+2. That's it — the included workflow (`.github/workflows/deploy-pages.yml`) deploys automatically on every push to `main`. Your app will be at `https://<username>.github.io/<repo-name>/`.
+
+**Install it on her device:**
+
+- **iPhone/iPad**: open the URL in Safari → Share button → **Add to Home Screen**
+- **Android**: open the URL in Chrome → menu → **Install app**
+
+The app keeps working with no internet after install (rides save on the device), and ☁️ Sync backs everything up to your Google Sheet whenever she's back online. Note: if the repo is private, GitHub Pages needs a paid plan — making the repo public (the app contains no personal data; her barn data never touches the repo) or hosting the folder on Netlify/Vercel are free alternatives.

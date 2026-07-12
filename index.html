@@ -2,8 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hoofprints 🐴</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E0567F">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hoofprints">
+<script>
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
+</script>
 </head>
 <body>
 <!--APP-START-->
@@ -1396,7 +1408,7 @@ function renderStable(){
       ${h.notes?`<p class="horse-meta">📝 ${esc(h.notes)}</p>`:''}
       <div class="card-actions">
         <button class="mini-btn" data-edit="${h.id}">✏️ Edit</button>
-        <button class="mini-btn" data-care="${h.id}">🩺 Care${h.care.length?` (${h.care.length})`:''}</button>
+        <button class="mini-btn" data-care="${h.id}">🩺 Care${(h.care||[]).length?` (${h.care.length})`:''}</button>
         <button class="mini-btn" data-del="${h.id}">🗑️</button>
       </div>
     </article>`;
@@ -1527,7 +1539,7 @@ $('#form-horse').addEventListener('submit',e=>{
     photo:pendingHorsePhoto
   };
   if(editingHorse){Object.assign(horseById(editingHorse),data);toast(`${data.name} updated! ✨`)}
-  else{state.horses.push({id:uid(),...data});toast(`Welcome to the stable, ${data.name}! 🎉`);confetti(70)}
+  else{state.horses.push({id:uid(),care:[],...data});toast(`Welcome to the stable, ${data.name}! 🎉`);confetti(70)}
   persist();render();checkNewBadges();
 });
 
@@ -1921,7 +1933,7 @@ function renderHorsePage(){
   const actRows=ACTIVITIES.filter(a=>actC[a.id]).sort((a,b)=>actC[b.id]-actC[a.id]);
   const bestMoments=rides.filter(r=>r.note).slice(0,3);
   const photos=[...(h.photo?[h.photo]:[]),...rides.filter(r=>r.photo).map(r=>r.photo)];
-  const care=[...h.care].sort((a,b)=>b.date.localeCompare(a.date));
+  const care=[...(h.care||[])].sort((a,b)=>b.date.localeCompare(a.date));
   const avatar=h.photo
     ?`<div class="avatar-xl has-photo" style="background-image:url(${h.photo})"></div>`
     :`<div class="avatar-xl" style="background:${coatBG(h.coat)}">${SIZE_EMOJI[h.size]||'🐴'}</div>`;
@@ -1952,7 +1964,7 @@ function renderHorsePage(){
     <div class="stat"><b>${rides.length}</b><span>Rides together</span></div>
     <div class="stat"><b>${mins}</b><span>Minutes</span></div>
     <div class="stat"><b>${magic}</b><span>Magical rides 🦄</span></div>
-    <div class="stat"><b>${h.care.length}</b><span>Care days</span></div>
+    <div class="stat"><b>${care.length}</b><span>Care days</span></div>
   </div>
   <div class="two-col">
     <div class="card">
@@ -2135,6 +2147,7 @@ function openCareDialog(id){
 function renderCareList(){
   const h=horseById(careHorseId);
   if(!h)return;
+  h.care=h.care||[];
   const sorted=[...h.care].sort((a,b)=>b.date.localeCompare(a.date));
   $('#care-list').innerHTML=sorted.length?sorted.map(c=>{
     const t=CARE_TYPES.find(x=>x.id===c.type)||CARE_TYPES[CARE_TYPES.length-1];
