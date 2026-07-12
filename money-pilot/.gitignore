@@ -1,0 +1,16 @@
+# Build output
+/build
+/dist
+bin/
+obj/
+*.fable-temp.csproj
+
+# Fable
+.fable/
+fable_modules/
+
+# Node
+node_modules/
+
+# Dev artifacts
+shot-*.png

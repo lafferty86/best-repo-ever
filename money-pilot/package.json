@@ -1,0 +1,21 @@
+{
+  "name": "money-pilot",
+  "version": "1.0.0",
+  "description": "Money Pilot — a fully featured personal finance cockpit built with Fable (F# -> JavaScript).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "dotnet fable clean App.fsproj --outDir build --yes",
+    "start": "dotnet tool restore && dotnet fable watch App.fsproj --outDir build --run vite",
+    "build": "dotnet tool restore && dotnet fable App.fsproj --outDir build --run vite build"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "use-sync-external-store": "^1.6.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1",
+    "vite": "^5.4.10"
+  }
+}
