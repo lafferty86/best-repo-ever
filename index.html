@@ -454,6 +454,12 @@ dialog::backdrop{background:rgba(60,35,20,.45);backdrop-filter:blur(3px)}
 
 /* ============ theme picker ============ */
 #btn-theme{margin-left:auto;align-self:flex-start}
+#btn-sync{align-self:flex-start}
+.sync-status{font-size:.85rem;font-weight:700;color:var(--ink-soft);margin:10px 0 0;min-height:1.3em}
+.sync-note{font-size:.85rem;color:var(--ink-soft);font-weight:700;margin:0 0 12px}
+.sync-note a{color:var(--rose)}
+.plain-check{display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer}
+.plain-check input{width:18px;height:18px;accent-color:var(--rose)}
 .theme-list{display:flex;flex-direction:column;gap:10px}
 .theme-opt{position:relative;display:flex;align-items:center;gap:14px;border:2px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;background:var(--card-2);transition:border-color .12s ease}
 .theme-opt:hover{border-color:var(--ink-soft)}
@@ -509,6 +515,7 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
       <p class="tagline">The barn book of <button id="rider-btn" title="Change rider name">…</button> ✨</p>
     </div>
     <button class="mini-btn" id="btn-theme">🎨 Theme</button>
+    <button class="mini-btn" id="btn-sync">☁️ Sync</button>
   </header>
 
   <div class="stats" aria-label="My totals">
@@ -829,6 +836,31 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
   </div>
 </dialog>
 
+<!-- SYNC DIALOG -->
+<dialog id="dlg-sync">
+  <div class="dlg-inner">
+    <h2>Cloud sync ☁️</h2>
+    <p class="sync-note">Keep the whole barn safe in a Google Sheet and use it on more than one device. A grown-up sets it up once — see the <a href="https://github.com/lafferty86/best-repo-ever#cloud-sync-google-sheets" target="_blank" rel="noopener">setup guide</a>.</p>
+    <div class="field">
+      <label for="sync-url">Web app URL</label>
+      <input type="text" id="sync-url" placeholder="https://script.google.com/macros/s/…/exec">
+    </div>
+    <div class="field">
+      <label for="sync-secret">Secret word</label>
+      <input type="text" id="sync-secret" placeholder="the SECRET from the script">
+    </div>
+    <div class="field">
+      <label class="plain-check"><input type="checkbox" id="sync-auto"> Auto-save to the cloud after every change</label>
+    </div>
+    <p class="sync-status" id="sync-status"></p>
+    <div class="dlg-actions">
+      <button type="button" class="ghost-btn" data-close>Close</button>
+      <button type="button" class="cta green" id="sync-pull">⬇ Get from cloud</button>
+      <button type="button" class="cta" id="sync-push">⬆ Send to cloud</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- THEME DIALOG -->
 <dialog id="dlg-theme">
   <div class="dlg-inner">
@@ -935,6 +967,7 @@ function normalize(s){
   s.wishes=Array.isArray(s.wishes)?s.wishes:[];
   s.theme=THEMES.some(t=>t.id===s.theme)?s.theme:'party';
   s.games=Object.assign({quizBest:0,perfectQuiz:0,bestMemory:0,bestJump:0},(s.games&&typeof s.games==='object')?s.games:{});
+  s.updatedAt=typeof s.updatedAt==='number'?s.updatedAt:0;
   return s;
 }
 let state=load();
@@ -945,7 +978,11 @@ function load(){
   }catch(e){}
   return normalize({rider:'',horses:[],rides:[],goals:[],wishes:[],theme:'party'});
 }
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('Uh oh — couldn’t save. Storage might be full!')}}
+function persist(skipCloud){
+  state.updatedAt=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('Uh oh — couldn’t save. Storage might be full!')}
+  if(!skipCloud)schedulePush();
+}
 const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=s=>document.querySelector(s);
@@ -1610,6 +1647,97 @@ jc.addEventListener('pointerdown',e=>{e.preventDefault();jumpInput()});
 document.addEventListener('keydown',e=>{
   if(e.code==='Space'&&$('#dlg-jump').open){e.preventDefault();jumpInput()}
 });
+
+/* ================= cloud sync (Google Sheets) ================= */
+const SYNC_KEY='hoofprints-sync';
+let syncCfg=loadSyncCfg(),pushTimer=null;
+function loadSyncCfg(){
+  try{
+    const c=JSON.parse(localStorage.getItem(SYNC_KEY));
+    if(c&&typeof c.url==='string')return Object.assign({url:'',secret:'',auto:true},c);
+  }catch(e){}
+  return {url:'',secret:'',auto:true};
+}
+function saveSyncCfg(){try{localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg))}catch(e){}}
+function syncUrl(){return syncCfg.url+(syncCfg.url.includes('?')?'&':'?')+'secret='+encodeURIComponent(syncCfg.secret)}
+function readSyncForm(){
+  syncCfg.url=$('#sync-url').value.trim();
+  syncCfg.secret=$('#sync-secret').value.trim();
+  syncCfg.auto=$('#sync-auto').checked;
+  saveSyncCfg();
+}
+function syncStatus(msg){const el=$('#sync-status');if(el)el.textContent=msg}
+function schedulePush(){
+  if(!syncCfg.url||!syncCfg.auto)return;
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(()=>pushCloud(false),2500);
+}
+async function pushCloud(manual){
+  if(!syncCfg.url){if(manual)toast('Add the web app URL first ☁️');return}
+  syncStatus('Sending to the cloud… ⏳');
+  try{
+    const res=await fetch(syncUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(state)});
+    const j=await res.json().catch(()=>null);
+    if(res.ok&&j&&j.ok){
+      syncStatus('Saved to the cloud ✅ '+new Date().toLocaleTimeString());
+      if(manual)toast('Barn saved to the cloud ☁️✅');
+    }else throw new Error((j&&j.error)||('HTTP '+res.status));
+  }catch(e){
+    syncStatus('Couldn’t reach the cloud 😢 ('+e.message+')');
+    if(manual)toast('Cloud save didn’t work — check the URL and secret 🤔');
+  }
+}
+async function pullCloud(manual){
+  if(!syncCfg.url){if(manual)toast('Add the web app URL first ☁️');return}
+  syncStatus('Getting the cloud copy… ⏳');
+  try{
+    const res=await fetch(syncUrl());
+    const j=await res.json();
+    if(j&&j.error)throw new Error(j.error);
+    if(j&&j.empty){syncStatus('The cloud is empty so far — send your barn up first!');return}
+    const cloud=normalize(j);
+    if(!cloud)throw new Error('that doesn’t look like a barn');
+    const localEmpty=!state.horses.length&&!state.rides.length&&!state.goals.length&&!state.wishes.length;
+    if(!localEmpty&&manual&&!confirm('Load the cloud copy? It replaces what’s on this device.')){syncStatus('');return}
+    state=cloud;persist(true);
+    knownEarned=new Set(earnedBadges().map(b=>b.id));
+    applyTheme(state.theme);render();
+    syncStatus('Loaded from the cloud ✅');
+    toast('Barn loaded from the cloud ☁️🐴');confetti(40);
+  }catch(e){
+    syncStatus('Couldn’t reach the cloud 😢 ('+e.message+')');
+    if(manual)toast('Cloud load didn’t work — check the URL and secret 🤔');
+  }
+}
+$('#btn-sync').addEventListener('click',()=>{
+  $('#sync-url').value=syncCfg.url;
+  $('#sync-secret').value=syncCfg.secret;
+  $('#sync-auto').checked=syncCfg.auto;
+  syncStatus(syncCfg.url?'Ready ✅':'Not set up yet — paste the web app URL above.');
+  $('#dlg-sync').showModal();
+});
+$('#sync-push').addEventListener('click',()=>{readSyncForm();pushCloud(true)});
+$('#sync-pull').addEventListener('click',()=>{readSyncForm();pullCloud(true)});
+$('#dlg-sync').addEventListener('close',readSyncForm);
+// on startup: quietly pull if this device is empty, or nudge if the cloud is newer
+if(syncCfg.url){(async()=>{
+  try{
+    const res=await fetch(syncUrl());
+    const j=await res.json();
+    if(!j||j.error||j.empty)return;
+    const cloud=normalize(j);
+    if(!cloud)return;
+    const localEmpty=!state.horses.length&&!state.rides.length&&!state.goals.length&&!state.wishes.length;
+    if(localEmpty&&(cloud.horses.length||cloud.rides.length||cloud.goals.length||cloud.wishes.length)){
+      state=cloud;persist(true);
+      knownEarned=new Set(earnedBadges().map(b=>b.id));
+      applyTheme(state.theme);render();
+      toast('Welcome back! Loaded your barn from the cloud ☁️🐴');
+    }else if((cloud.updatedAt||0)>(state.updatedAt||0)+2000){
+      toast('☁️ The cloud copy is newer — open ☁️ Sync and tap “Get from cloud”');
+    }
+  }catch(e){}
+})()}
 
 /* ================= toast ================= */
 let toastTimer=null;
