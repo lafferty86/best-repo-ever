@@ -1,8 +1,7 @@
 # Money Pilot ✈️💰
 
-**Your financial cockpit** — a fully featured, interactive personal-finance UI built entirely with
-[**Fable**](https://fable.io) (F# compiled to JavaScript) using the Elmish (Model-View-Update)
-architecture and [Feliz](https://github.com/Zaid-Ajaj/Feliz) for the view layer.
+**Your financial cockpit** — a fully featured, interactive personal-finance UI built with
+**React + TypeScript** and **Vite**.
 
 Money Pilot takes cues from the best personal-finance apps out there — Copilot Money, Monarch Money,
 and YNAB — and brings the highlights together in one polished, single-page cockpit.
@@ -11,89 +10,87 @@ and YNAB — and brings the highlights together in one polished, single-page coc
 
 ## Features
 
-Eight fully interactive sections, all driven by a single Elmish state store:
+Eight fully interactive sections, all driven by a single typed state store:
 
 | Section | What it does |
 | --- | --- |
-| **Dashboard** | Net-worth hero with trend chart, asset/liability/income/spend tiles, spending donut, top categories, recent activity, upcoming bills. |
+| **Dashboard** | Net-worth hero with a computed month-over-month delta and trend chart, asset/liability/income/spend tiles, spending donut, top categories, recent activity, upcoming bills. |
 | **Accounts** | Net-worth band (assets vs. liabilities), accounts grouped by type; click any account to jump to its filtered transactions. |
-| **Transactions** | Live search across merchant/note/category, filter by category & account, sort by date/amount, "to review" filter, inline re-categorization, mark-reviewed, delete, and live inflow/outflow/net totals. |
+| **Transactions** | Live search across merchant/note/category, filter by category & account, sort by date/amount, "to review" filter, inline re-categorization, mark-reviewed, delete, CSV export, and live inflow/outflow/net totals. |
 | **Budget** | Adjustable per-category budgets (spent is computed live from your transactions), donut summary, over-budget warnings, and ± steppers to tune each limit. |
 | **Cash Flow** | Income-vs-spending grouped bars, savings-rate stats, net-savings trend, and a monthly breakdown waterfall. |
 | **Investments** | Portfolio value hero + allocation donut, holdings with gain/loss, allocation bars, and a cost-basis/return summary. |
 | **Recurring** | Bills, subscriptions & paychecks normalized to a monthly figure, with a subscription watch cloud. |
 | **Goals** | Savings goals with progress rings and one-tap contributions that update live. |
 
-Plus: **light / dark theme** toggle, an **Add transaction** modal that updates balances and budgets in real
-time, toast notifications, a collapsible sidebar, and a responsive layout. Every chart (donut, area/line,
-grouped bars, ranked bars, sparkline) is **hand-drawn SVG in F#** — zero JavaScript charting dependencies.
+Plus: **light / dark theme** toggle (persisted to `localStorage`), a **collapsible sidebar**, an
+**Add transaction** modal that updates balances in real time, toast notifications, deep-links from
+categories/accounts into filtered transactions, and a responsive layout. Every chart (donut,
+area/line, grouped bars, ranked bars) is **hand-drawn SVG** — zero charting dependencies.
 
 ## Tech stack
 
-- **[Fable](https://fable.io) 4** — F# → JavaScript compiler
-- **[Feliz](https://github.com/Zaid-Ajaj/Feliz)** — type-safe React DSL for F#
-- **[Elmish](https://elmish.github.io/elmish/)** + **Feliz.UseElmish** — Model-View-Update state management
-- **[Vite](https://vitejs.dev)** — bundling & dev server
-- **React 18** — runtime (via Feliz)
+- **[React 18](https://react.dev)** + **[TypeScript](https://www.typescriptlang.org)** (strict mode)
+- **[Vite](https://vitejs.dev)** — dev server & bundler
+- State: a typed `useReducer` + Context store (Model-View-Update pattern — one immutable state
+  object, one pure reducer), no external state library.
 
 ## Prerequisites
 
-- [.NET SDK 8](https://dotnet.microsoft.com/download) (provides `dotnet`)
 - [Node.js 18+](https://nodejs.org) (provides `npm`)
 
 ## Getting started
 
 ```bash
 cd money-pilot
-
-# restore the Fable tool + npm packages
-dotnet tool restore
 npm install
-
-# compile F# with Fable and launch the Vite dev server (hot reload)
-npm start
+npm run dev        # Vite dev server with hot reload → http://localhost:5173
 ```
-
-Then open the URL Vite prints (default <http://localhost:5173>).
 
 ### Production build
 
 ```bash
-npm run build      # Fable compile -> Vite build, output in ./dist
-npx vite preview   # serve the built bundle
+npm run build      # tsc typecheck + vite build → ./dist
+npm run preview    # serve the built bundle
+```
+
+### Type-check only
+
+```bash
+npm run typecheck
 ```
 
 ## Project layout
 
 ```
 money-pilot/
-├── App.fsproj              # F# project + package references
-├── index.html              # app shell (loads ./build/src/App.js)
+├── index.html
 ├── styles.css              # design system (light + dark themes)
-├── vite.config.js
+├── vite.config.ts
+├── tsconfig.json
 └── src/
-    ├── Format.fs           # currency / date / percentage formatting
-    ├── Types.fs            # domain model (Account, Transaction, Budget, Goal, …)
-    ├── Data.fs             # realistic seed data
-    ├── Charts.fs           # hand-drawn SVG charts
-    ├── State.fs            # Elmish Model / Msg / init / update
-    ├── App.fs              # root component + React mount
-    └── Views/              # one module per section + shared chrome
-        ├── Shared.fs       # sidebar, top bar, cards, modal, toast
-        ├── Dashboard.fs  Accounts.fs  Transactions.fs  Budget.fs
-        └── CashFlow.fs  Investments.fs  Recurring.fs  Goals.fs
+    ├── main.tsx            # React entry point
+    ├── App.tsx             # shell: sidebar + topbar + current page + modal + toast
+    ├── types.ts            # domain model (Account, Transaction, Budget, Goal, …)
+    ├── data.ts             # realistic seed data
+    ├── format.ts           # currency / date / percentage formatting
+    ├── charts.tsx          # hand-drawn SVG charts (Donut, AreaLine, GroupedBars, RankedBars)
+    ├── store.tsx           # typed reducer + Context, selectors, CSV export
+    ├── components/         # Sidebar, Topbar, Modal, Toast, shared primitives
+    └── pages/              # Dashboard, Accounts, Transactions, Budget,
+                            # CashFlow, Investments, Recurring, Goals
 ```
 
 ## Verifying it works
 
 `verify.mjs` is a Playwright smoke test that loads the built app, walks every page, exercises the
-key interactions (search, add transaction, budget steppers, goal contributions, theme toggle) and
-asserts there are no console errors.
+key interactions (sidebar collapse, search, add transaction, budget steppers, goal contributions,
+theme toggle) and asserts there are no console errors.
 
 ```bash
 npm run build
-npx vite preview --port 4173 &
-node verify.mjs          # set CHROME_PATH to use a specific Chromium binary
+npm run preview -- --port 4173 &
+CHROME_PATH=/path/to/chrome node verify.mjs   # CHROME_PATH optional; omit to use Playwright's browser
 ```
 
 All data lives in memory and is fully editable at runtime — no backend required.
