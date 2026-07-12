@@ -1,4 +1,4 @@
-import { useStore } from "./store";
+import { useStore, useDispatch } from "./store";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
 import { Modal } from "./components/Modal";
@@ -28,9 +28,11 @@ function CurrentPage() {
 
 export function App() {
   const { theme, sidebarOpen } = useStore();
+  const dispatch = useDispatch();
   return (
     <div className={theme === "dark" ? "app theme-dark" : "app theme-light"} data-sidebar={sidebarOpen ? "open" : "closed"}>
       <Sidebar />
+      <div className="sidebar-backdrop" onClick={() => dispatch({ t: "toggleSidebar" })} />
       <div className="main">
         <Topbar />
         <main className="content"><CurrentPage /></main>

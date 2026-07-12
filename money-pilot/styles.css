@@ -59,7 +59,7 @@ button { font-family: inherit; cursor: pointer; }
   width: 244px; flex-shrink: 0; background: var(--sidebar);
   border-right: 1px solid var(--border); padding: 20px 14px;
   display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
-  transition: width 0.25s ease;
+  transition: width 0.25s ease, transform 0.25s ease;
 }
 .sidebar.collapsed { width: 74px; }
 .sidebar.collapsed .brand-text,
@@ -441,6 +441,9 @@ button { font-family: inherit; cursor: pointer; }
 .toast.warning { background: #d97706; box-shadow: 0 12px 34px rgba(217, 119, 6, 0.45); }
 @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(16px); } to { opacity: 1; transform: translateX(-50%); } }
 
+/* Backdrop behind the mobile drawer — hidden on desktop. */
+.sidebar-backdrop { display: none; }
+
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
   .grid-2, .stat-row, .cf-stat-row, .summary-strip, .goal-grid { grid-template-columns: 1fr; }
@@ -448,7 +451,26 @@ button { font-family: inherit; cursor: pointer; }
   .hero { flex-direction: column; align-items: flex-start; }
   .hero-chart { max-width: 100%; width: 100%; }
   .content { padding: 18px; }
-  .sidebar { position: fixed; z-index: 60; height: 100vh; box-shadow: var(--shadow); }
+
+  /* Sidebar becomes an off-canvas drawer that overlays content instead of
+     sitting in the flow. Closed = fully hidden; open = slides in over content. */
+  .sidebar {
+    position: fixed; top: 0; left: 0; z-index: 60; height: 100vh;
+    width: 244px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+  /* On mobile the collapsed state means "hidden drawer", not a 74px rail. */
+  .sidebar.collapsed { width: 244px; transform: translateX(-100%); }
+  .sidebar.collapsed .brand-text,
+  .sidebar.collapsed .nav-label { display: flex; }
+  .sidebar.collapsed .nav-item { justify-content: flex-start; }
+  .sidebar.collapsed .add-btn { justify-content: center; }
+
+  /* Dim + click-to-close backdrop, shown only when the drawer is open. */
+  .app[data-sidebar="open"] .sidebar-backdrop {
+    display: block; position: fixed; inset: 0; z-index: 55;
+    background: rgba(6, 9, 20, 0.5); backdrop-filter: blur(2px);
+    animation: fade 0.2s ease;
+  }
 }
 @media (max-width: 560px) {
   .stat-row { grid-template-columns: 1fr 1fr; }
