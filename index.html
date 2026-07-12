@@ -369,6 +369,28 @@ nav.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px;margin-bottom:20px}
 .pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
 
+/* ============ games ============ */
+.fun-card p{margin:0 0 8px}
+.fun-card .cta{margin-top:6px}
+.quiz-progress{font-size:.8rem;color:var(--ink-soft);font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin:0 0 6px}
+.quiz-q{font-weight:800;font-size:1.08rem;margin:0 0 12px}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{text-align:left;border:2px solid var(--line);background:var(--card-2);border-radius:12px;padding:10px 14px;font-weight:700;font-size:.95rem;color:var(--ink);cursor:pointer}
+.quiz-opt:hover:not(:disabled){border-color:var(--rose)}
+.quiz-opt:disabled{cursor:default;opacity:.75}
+.quiz-opt.right{border-color:var(--green);background:var(--green-soft);opacity:1}
+.quiz-opt.wrong{border-color:var(--rose-deep);background:var(--rose-soft);opacity:1}
+.quiz-explain{background:var(--sky-soft);border-radius:12px;padding:10px 12px;font-size:.9rem;margin:12px 0 0}
+.quiz-end{text-align:center;padding:10px 0}
+.quiz-end .big{font-size:3rem}
+.quiz-end h3{font-size:1.5rem;font-weight:800;margin:4px 0 10px}
+.mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.mem-card{aspect-ratio:1;font-size:1.8rem;border-radius:12px;border:2px solid var(--line);background:var(--rose-soft);display:grid;place-items:center;cursor:pointer;transition:transform .12s ease,background .12s ease}
+.mem-card:hover{transform:scale(1.04)}
+.mem-card.matched{background:var(--green-soft);border-color:var(--green);transform:scale(.94);cursor:default}
+.mem-card.open{background:var(--card-2)}
+#jump-canvas{width:100%;height:auto;display:block;background:var(--sky-soft);border:2px solid var(--line);border-radius:14px;touch-action:manipulation;cursor:pointer}
+
 /* ============ forms & dialogs ============ */
 dialog{
   border:none;border-radius:24px;padding:0;max-width:520px;width:calc(100% - 32px);
@@ -568,6 +590,24 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
         <button class="cta" id="btn-gen">Make a name! ✨</button>
       </div>
       <div class="card fun-card">
+        <h3>🧠 Pony Quiz Show</h3>
+        <p class="horse-meta">5 questions. Are you a horse genius?</p>
+        <p class="chips"><span class="chip gold" id="quiz-best-chip">Best: —</span></p>
+        <button class="cta" id="btn-quiz">Play! 🎤</button>
+      </div>
+      <div class="card fun-card">
+        <h3>👀 Stable Pairs</h3>
+        <p class="horse-meta">Find all 8 matching pairs in as few flips as you can.</p>
+        <p class="chips"><span class="chip sky" id="mem-best-chip">Best: —</span></p>
+        <button class="cta" id="btn-mem">Play! 🂠</button>
+      </div>
+      <div class="card fun-card">
+        <h3>🏇 Gallop!</h3>
+        <p class="horse-meta">Press space or tap to jump the fences. How far can you go?</p>
+        <p class="chips"><span class="chip" id="jump-best-chip">Best: 0 fences</span></p>
+        <button class="cta green" id="btn-jump">Play! 🐎</button>
+      </div>
+      <div class="card fun-card">
         <h3>🎠 Send the pony!</h3>
         <p class="horse-meta">Need a smile? Send a pony galloping across your screen.</p>
         <br>
@@ -757,6 +797,38 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
   </form>
 </dialog>
 
+<!-- QUIZ DIALOG -->
+<dialog id="dlg-quiz">
+  <div class="dlg-inner">
+    <h2>Pony Quiz Show 🧠</h2>
+    <div id="quiz-body"></div>
+  </div>
+</dialog>
+
+<!-- MEMORY DIALOG -->
+<dialog id="dlg-mem">
+  <div class="dlg-inner">
+    <h2>Stable Pairs 👀</h2>
+    <p class="horse-meta" id="mem-status">Flips: 0</p>
+    <div class="mem-grid" id="mem-grid"></div>
+    <div class="dlg-actions">
+      <button class="ghost-btn" data-close>Done</button>
+      <button class="cta" id="mem-restart">Shuffle again 🔀</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- JUMP DIALOG -->
+<dialog id="dlg-jump">
+  <div class="dlg-inner">
+    <h2>Gallop! 🏇</h2>
+    <p class="horse-meta">Press <b>space</b> or <b>tap the field</b> to jump. Don't hit a fence!</p>
+    <canvas id="jump-canvas" width="640" height="220"></canvas>
+    <p class="horse-meta" style="margin-top:8px">Fences cleared: <b id="jump-score">0</b> · Best: <b id="jump-best-live">0</b></p>
+    <div class="dlg-actions"><button class="ghost-btn" data-close>Done</button></div>
+  </div>
+</dialog>
+
 <!-- THEME DIALOG -->
 <dialog id="dlg-theme">
   <div class="dlg-inner">
@@ -842,7 +914,10 @@ const BADGES=[
   {id:'goal1',   emoji:'🎯', name:'Goal Getter',       desc:'Complete your first riding goal',      test:s=>s.goals.some(g=>g.done)},
   {id:'goal5',   emoji:'🚀', name:'Dream Chaser',      desc:'Complete 5 riding goals',              test:s=>s.goals.filter(g=>g.done).length>=5},
   {id:'wish1',   emoji:'🌠', name:'Wish Come True',    desc:'One of your wishes comes true',        test:s=>s.wishes.some(w=>w.granted)},
-  {id:'photo',   emoji:'📸', name:'Say Neigh-se!',     desc:'Add a photo to a horse or a ride',     test:s=>s.horses.some(h=>h.photo)||s.rides.some(r=>r.photo)}
+  {id:'photo',   emoji:'📸', name:'Say Neigh-se!',     desc:'Add a photo to a horse or a ride',     test:s=>s.horses.some(h=>h.photo)||s.rides.some(r=>r.photo)},
+  {id:'quiz',    emoji:'🧠', name:'Quiz Whiz',         desc:'Score a perfect 5/5 in the Pony Quiz',  test:s=>(s.games||{}).perfectQuiz>=1},
+  {id:'pairs',   emoji:'👀', name:'Sharp Eyes',        desc:'Win Stable Pairs in 12 flips or fewer', test:s=>{const b=(s.games||{}).bestMemory;return b>0&&b<=12}},
+  {id:'flyer',   emoji:'🏇', name:'High Flyer',        desc:'Clear 10 fences in one Gallop! run',    test:s=>(s.games||{}).bestJump>=10}
 ];
 const GOAL_EMOJIS=['🏇','🦄','⭐','🏆','🎪','🌈','💪','🎯','🐴','✨'];
 const THEMES=[
@@ -859,6 +934,7 @@ function normalize(s){
   s.goals=Array.isArray(s.goals)?s.goals:[];
   s.wishes=Array.isArray(s.wishes)?s.wishes:[];
   s.theme=THEMES.some(t=>t.id===s.theme)?s.theme:'party';
+  s.games=Object.assign({quizBest:0,perfectQuiz:0,bestMemory:0,bestJump:0},(s.games&&typeof s.games==='object')?s.games:{});
   return s;
 }
 let state=load();
@@ -867,7 +943,7 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){const s=normalize(JSON.parse(raw)); if(s)return s;}
   }catch(e){}
-  return {rider:'',horses:[],rides:[],goals:[],wishes:[],theme:'party'};
+  return normalize({rider:'',horses:[],rides:[],goals:[],wishes:[],theme:'party'});
 }
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('Uh oh — couldn’t save. Storage might be full!')}}
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -902,6 +978,9 @@ function render(){
   $('#stat-badges').textContent=earnedBadges().length;
   $('#rider-btn').textContent=state.rider||'you';
   renderStable();renderJournal();renderGoals();renderWishes();renderBadges();
+  $('#quiz-best-chip').textContent=state.games.quizBest?`Best: ${state.games.quizBest}/5`:'Best: —';
+  $('#mem-best-chip').textContent=state.games.bestMemory?`Best: ${state.games.bestMemory} flips`:'Best: —';
+  $('#jump-best-chip').textContent=`Best: ${state.games.bestJump} fence${state.games.bestJump===1?'':'s'}`;
 }
 
 function renderGoals(){
@@ -1334,6 +1413,203 @@ $('#btn-theme').addEventListener('click',()=>{
 document.querySelectorAll('#theme-list input').forEach(i=>i.addEventListener('change',()=>{
   state.theme=i.value;applyTheme(i.value);persist();confetti(30);
 }));
+
+/* ================= games: pony quiz ================= */
+const QUIZ=[
+  {q:'What is a baby horse called?',o:['A foal','A calf','A cub','A joey'],a:0,x:'Foals can stand up when they’re only about an hour old!'},
+  {q:'What is the hair along a horse’s neck called?',o:['The mane','The fringe','The mohawk','The tassel'],a:0,x:'And the long hair behind is the tail — great for swatting flies.'},
+  {q:'Horse hooves are made of the same stuff as your…',o:['Fingernails','Teeth','Hair ties','Elbows'],a:0,x:'It’s called keratin — that’s why trimming hooves doesn’t hurt.'},
+  {q:'What is a grown-up girl horse called?',o:['A mare','A doe','A hen','A ewe'],a:0,x:'A grown-up boy horse is a stallion or a gelding.'},
+  {q:'How do horses usually sleep?',o:['Standing up','Upside down','In bunk beds','Floating'],a:0,x:'Their legs lock in place like kickstands so they don’t fall over!'},
+  {q:'Which of these is a real horse gait?',o:['The canter','The wiggle','The scoot','The bounce'],a:0,x:'Walk → trot → canter → gallop, from slowest to fastest.'},
+  {q:'A horse’s FASTEST gait is called the…',o:['Gallop','Zoom','Turbo trot','Mega walk'],a:0,x:'Racehorses gallop at over 40 miles per hour!'},
+  {q:'Which side do riders usually get on a horse from?',o:['The left side','The right side','The back','A ladder'],a:0,x:'It’s an old tradition from when knights carried swords on their left hip.'},
+  {q:'How is a horse’s height measured?',o:['In hands','In feet','In carrots','In tail-lengths'],a:0,x:'One hand = 4 inches. A pony is 14.2 hands or smaller!'},
+  {q:'A horse with a golden coat and white mane is called a…',o:['Palomino','Goldicorn','Butterscotch','Sunny'],a:0,x:'Palominos really do look like they’re made of gold.'},
+  {q:'Which breed is famous for its spots?',o:['Appaloosa','Polka Pony','Dot Trotter','Spotshire'],a:0,x:'Every Appaloosa’s spot pattern is one of a kind.'},
+  {q:'What is a farrier’s job?',o:['Caring for hooves and fitting shoes','Braiding manes','Painting stables','Teaching horses to sing'],a:0,x:'Horses get a hoof trim about every 6–8 weeks — like a giant nail salon.'},
+  {q:'What can horses NOT do?',o:['Burp','Run','Swim','Dream'],a:0,x:'Horses physically can’t burp — their tummies only work one way!'},
+  {q:'A small white marking on a horse’s forehead is called a…',o:['Star','Freckle','Sticker','Moon'],a:0,x:'A stripe down the nose is a blaze, and a big white face is called bald!'},
+  {q:'Where does a horse live?',o:['A stable','A kennel','A coop','A burrow'],a:0,x:'A horse’s own room in the stable is called a stall.'},
+  {q:'Which snack is DANGEROUS for horses?',o:['Chocolate','Apples','Carrots','Hay'],a:0,x:'Chocolate is toxic to horses (and dogs!). Stick to apples and carrots.'},
+  {q:'What do you call a horse’s foot doctor visit tool that goes clip-clop?',o:['Horseshoes','Flip flops','Hoof hats','Toe rings'],a:0,x:'Horseshoes protect hooves — and finding one is said to be lucky!'},
+  {q:'How many horns does a unicorn have?',o:['One','Two','Seventeen','Trick question — unicorns are just fancy horses'],a:0,x:'Uni means one! (But the last answer is also a little bit true.)'},
+  {q:'What should you feed a horse with your hand flat like a plate?',o:['A treat','Spaghetti','Soup','Nothing, hands are for waving'],a:0,x:'A flat hand keeps your fingers safely away from those big teeth!'},
+  {q:'Horses talk to each other mostly with their…',o:['Ears and body','Cell phones','Whinny-mail','Secret paw signals'],a:0,x:'Pinned-back ears mean “grumpy!” — perked forward means “ooh, what’s that?”'}
+];
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+let quizRound=null;
+function startQuiz(){
+  quizRound={qs:shuffle(QUIZ).slice(0,5),idx:0,score:0};
+  renderQuizQ();
+  $('#dlg-quiz').showModal();
+}
+function renderQuizQ(){
+  const r=quizRound,item=r.qs[r.idx];
+  const opts=shuffle(item.o.map((t,i)=>({t,ok:i===item.a})));
+  $('#quiz-body').innerHTML=`
+    <p class="quiz-progress">Question ${r.idx+1} of 5 · Score ${r.score}</p>
+    <p class="quiz-q">${item.q}</p>
+    <div class="quiz-opts">${opts.map((o,i)=>`<button class="quiz-opt" data-ok="${o.ok?1:0}">${o.t}</button>`).join('')}</div>
+    <div id="quiz-after"></div>`;
+  $('#quiz-body').querySelectorAll('.quiz-opt').forEach(b=>b.addEventListener('click',()=>{
+    const ok=b.dataset.ok==='1';
+    if(ok)r.score++;
+    $('#quiz-body').querySelectorAll('.quiz-opt').forEach(x=>{
+      x.disabled=true;
+      if(x.dataset.ok==='1')x.classList.add('right');
+      else if(x===b)x.classList.add('wrong');
+    });
+    if(ok)confetti(20);
+    $('#quiz-after').innerHTML=`<p class="quiz-explain">${ok?'🎉 Yes!':'🙊 Not quite!'} ${item.x}</p>
+      <div class="dlg-actions"><button class="cta" id="quiz-next">${r.idx<4?'Next question →':'See my score! 🏁'}</button></div>`;
+    $('#quiz-next').addEventListener('click',()=>{
+      r.idx++;
+      if(r.idx<5)renderQuizQ();else endQuiz();
+    });
+  }));
+}
+function endQuiz(){
+  const r=quizRound;
+  const msg=r.score===5?'PERFECT! You’re a certified horse genius! 🦄':r.score>=3?'Great job! You really know your horses! 🐴':'Good try! The horses still love you 💗';
+  $('#quiz-body').innerHTML=`<div class="quiz-end">
+    <div class="big">${r.score===5?'🏆':r.score>=3?'🏅':'🐴'}</div>
+    <h3>${r.score} out of 5!</h3>
+    <p class="horse-meta">${msg}</p>
+    <div class="dlg-actions" style="justify-content:center">
+      <button class="ghost-btn" data-close>Done</button>
+      <button class="cta" id="quiz-again">Play again! 🔄</button>
+    </div>
+  </div>`;
+  $('#quiz-body').querySelector('[data-close]').addEventListener('click',()=>$('#dlg-quiz').close());
+  $('#quiz-again').addEventListener('click',startQuiz);
+  if(r.score>state.games.quizBest)state.games.quizBest=r.score;
+  if(r.score===5){state.games.perfectQuiz++;confetti(120)}
+  persist();render();checkNewBadges();
+}
+$('#btn-quiz').addEventListener('click',startQuiz);
+
+/* ================= games: stable pairs ================= */
+const MEM_EMOJIS=['🐴','🦄','🥕','🍎','🏆','🌾','🎠','🧼'];
+let mem=null;
+function startMem(){
+  mem={deck:shuffle([...MEM_EMOJIS,...MEM_EMOJIS]),open:[],matched:new Set(),flips:0,lock:false};
+  drawMem();
+  $('#mem-status').textContent='Flips: 0';
+}
+function drawMem(){
+  $('#mem-grid').innerHTML=mem.deck.map((e,i)=>{
+    const isOpen=mem.open.includes(i),isMatch=mem.matched.has(i);
+    return `<button class="mem-card ${isMatch?'matched':isOpen?'open':''}" data-i="${i}" ${isMatch?'disabled':''} aria-label="card ${i+1}">${(isOpen||isMatch)?e:'❓'}</button>`;
+  }).join('');
+  $('#mem-grid').querySelectorAll('.mem-card:not(.matched)').forEach(b=>b.addEventListener('click',()=>flipMem(+b.dataset.i)));
+}
+function flipMem(i){
+  if(mem.lock||mem.open.includes(i)||mem.matched.has(i))return;
+  mem.open.push(i);
+  if(mem.open.length===2){
+    mem.flips++;
+    $('#mem-status').textContent=`Flips: ${mem.flips}`;
+    const [a,b]=mem.open;
+    if(mem.deck[a]===mem.deck[b]){
+      mem.matched.add(a);mem.matched.add(b);mem.open=[];
+      drawMem();
+      if(mem.matched.size===16){
+        $('#mem-status').textContent=`You did it in ${mem.flips} flips! 🎉`;
+        confetti(90);
+        if(!state.games.bestMemory||mem.flips<state.games.bestMemory)state.games.bestMemory=mem.flips;
+        persist();render();checkNewBadges();
+      }
+    }else{
+      mem.lock=true;drawMem();
+      setTimeout(()=>{mem.open=[];mem.lock=false;drawMem()},750);
+    }
+  }else drawMem();
+}
+$('#btn-mem').addEventListener('click',()=>{startMem();$('#dlg-mem').showModal()});
+$('#mem-restart').addEventListener('click',startMem);
+
+/* ================= games: gallop! ================= */
+const jc=$('#jump-canvas'),jctx=jc.getContext('2d');
+let jump=null,jumpRaf=null;
+window._hoofJump=()=>jump;
+function startJumpGame(){
+  jump={y:180,vy:0,obstacles:[],speed:4.4,score:0,over:false,started:false,cloudX:640};
+  $('#jump-score').textContent='0';
+  $('#jump-best-live').textContent=state.games.bestJump;
+  if(!jumpRaf)jumpLoop();
+}
+function jumpInput(){
+  if(!jump)return;
+  if(jump.over){startJumpGame();return}
+  jump.started=true;
+  if(jump.y>=180)jump.vy=-10.6;
+}
+function jumpLoop(){
+  jumpRaf=requestAnimationFrame(jumpLoop);
+  if(!$('#dlg-jump').open){cancelAnimationFrame(jumpRaf);jumpRaf=null;return}
+  const cs=getComputedStyle(document.documentElement);
+  const G=jump;
+  jctx.clearRect(0,0,640,220);
+  // ground + cloud
+  jctx.strokeStyle=cs.getPropertyValue('--ink-soft').trim();jctx.lineWidth=2;
+  jctx.beginPath();jctx.moveTo(0,181);jctx.lineTo(640,181);jctx.stroke();
+  jctx.font='22px serif';jctx.fillText('☁️',G.cloudX,44);
+  if(G.started&&!G.over)G.cloudX-=G.speed*.25;
+  if(G.cloudX<-30)G.cloudX=660;
+  if(G.started&&!G.over){
+    G.vy+=.55;G.y=Math.min(180,G.y+G.vy);
+    G.speed+=.0016;
+    // spawn
+    const last=G.obstacles[G.obstacles.length-1];
+    if(!last||last.x<640-(240+Math.random()*240+G.speed*18))G.obstacles.push({x:660,h:34+Math.random()*14,passed:false});
+    for(const o of G.obstacles){
+      o.x-=G.speed;
+      if(!o.passed&&o.x+16<78){o.passed=true;G.score++;$('#jump-score').textContent=G.score}
+    }
+    G.obstacles=G.obstacles.filter(o=>o.x>-30);
+    // collide
+    for(const o of G.obstacles){
+      if(78<o.x+16&&78+30>o.x&&G.y>181-o.h+6){
+        G.over=true;
+        if(G.score>state.games.bestJump){state.games.bestJump=G.score;$('#jump-best-live').textContent=G.score;confetti(60)}
+        persist();render();checkNewBadges();
+      }
+    }
+  }
+  // fences
+  jctx.strokeStyle='#8B5A33';jctx.lineWidth=4;
+  for(const o of G.obstacles){
+    jctx.beginPath();
+    jctx.moveTo(o.x,181);jctx.lineTo(o.x,181-o.h);
+    jctx.moveTo(o.x+16,181);jctx.lineTo(o.x+16,181-o.h);
+    jctx.moveTo(o.x-4,181-o.h+4);jctx.lineTo(o.x+20,181-o.h+4);
+    jctx.moveTo(o.x-4,181-o.h+16);jctx.lineTo(o.x+20,181-o.h+16);
+    jctx.stroke();
+  }
+  // horse (mirrored to face right)
+  jctx.save();
+  jctx.translate(78+17,G.y);
+  jctx.scale(-1,1);
+  jctx.font='34px serif';jctx.textAlign='center';
+  jctx.fillText('🐎',0,0);
+  jctx.restore();
+  // overlays
+  jctx.fillStyle=cs.getPropertyValue('--ink').trim();
+  jctx.font="bold 16px 'Nunito',sans-serif";jctx.textAlign='center';
+  if(!G.started)jctx.fillText('Press space or tap to start!',320,90);
+  if(G.over){
+    jctx.font="bold 22px 'Nunito',sans-serif";
+    jctx.fillText(`Oof! 🙈 You cleared ${G.score} fence${G.score===1?'':'s'}`,320,80);
+    jctx.font="bold 15px 'Nunito',sans-serif";
+    jctx.fillText('Press space or tap to try again',320,106);
+  }
+}
+$('#btn-jump').addEventListener('click',()=>{$('#dlg-jump').showModal();startJumpGame()});
+jc.addEventListener('pointerdown',e=>{e.preventDefault();jumpInput()});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&$('#dlg-jump').open){e.preventDefault();jumpInput()}
+});
 
 /* ================= toast ================= */
 let toastTimer=null;
