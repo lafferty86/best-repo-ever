@@ -273,6 +273,27 @@ dialog::backdrop{background:rgba(60,35,20,.45);backdrop-filter:blur(3px)}
 .dlg-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .ghost-btn{border:2px solid var(--line);background:none;color:var(--ink-soft);border-radius:999px;padding:10px 20px;font-weight:800}
 
+/* ============ goals ============ */
+.goal-top{display:flex;align-items:center;gap:10px}
+.goal-emoji{font-size:2rem;line-height:1}
+.goal-top h3{font-size:1.2rem;font-weight:800}
+.bar{height:16px;background:var(--card-2);border:2px solid var(--line);border-radius:999px;overflow:hidden;margin:8px 0 4px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--gold));border-radius:999px;transition:width .4s ease}
+.goal-card.done-card{border-color:var(--green)}
+.goal-card.done-card .goal-emoji::after{content:" ✅"}
+
+/* ============ wishlist ============ */
+.wish-card h3{font-size:1.15rem;font-weight:800}
+.wish-why{margin:4px 0 0;font-size:.92rem;color:var(--ink-soft)}
+.wish-why::before{content:"because "}
+.wish-card.granted{border-color:var(--gold);background:linear-gradient(0deg,var(--gold-soft),var(--card))}
+
+/* ============ photos ============ */
+.avatar.has-photo{background-position:center;background-size:cover}
+.photo-prev{width:72px;height:72px;flex:0 0 auto;border-radius:50%;background-color:var(--card-2);background-position:center;background-size:cover;border:2px solid var(--line);display:grid;place-items:center;font-size:30px}
+.photo-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ride-photo{display:block;max-width:min(260px,100%);border-radius:14px;margin-top:8px;border:2px solid var(--line)}
+
 /* ============ empty state ============ */
 .empty{
   text-align:center;padding:40px 20px;border:3px dashed var(--line);border-radius:var(--radius);
@@ -337,6 +358,8 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" data-tab="stable"  aria-selected="true">🐴 My Stable</button>
     <button class="tab" role="tab" data-tab="journal" aria-selected="false">📖 Ride Journal</button>
+    <button class="tab" role="tab" data-tab="goals"   aria-selected="false">🎯 My Goals</button>
+    <button class="tab" role="tab" data-tab="wishes"  aria-selected="false">🌠 Wishlist</button>
     <button class="tab" role="tab" data-tab="badges"  aria-selected="false">🏅 Badges</button>
     <button class="tab" role="tab" data-tab="fun"     aria-selected="false">✨ Fun Stuff</button>
   </nav>
@@ -357,6 +380,32 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
       <button class="cta green" id="btn-add-ride">+ Log a ride</button>
     </div>
     <div id="journal-list" class="journal-list"></div>
+  </section>
+
+  <!-- GOALS -->
+  <section id="panel-goals" role="tabpanel" hidden>
+    <div class="section-head">
+      <h2>My Riding Goals</h2>
+      <button class="cta" id="btn-add-goal">+ New goal</button>
+    </div>
+    <div id="goals-grid" class="grid"></div>
+    <div id="goals-done-wrap" hidden>
+      <div class="month-label">Goals I crushed 💥</div>
+      <div id="goals-done" class="grid"></div>
+    </div>
+  </section>
+
+  <!-- WISHLIST -->
+  <section id="panel-wishes" role="tabpanel" hidden>
+    <div class="section-head">
+      <h2>My Wishlist</h2>
+      <button class="cta" id="btn-add-wish">+ Make a wish</button>
+    </div>
+    <div id="wishes-grid" class="grid"></div>
+    <div id="wishes-done-wrap" hidden>
+      <div class="month-label">Wishes that came true ⭐</div>
+      <div id="wishes-done" class="grid"></div>
+    </div>
   </section>
 
   <!-- BADGES -->
@@ -443,6 +492,15 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
       </div>
     </div>
     <div class="field">
+      <label>Photo (optional)</label>
+      <div class="photo-row">
+        <div class="photo-prev" id="h-photo-prev">🐴</div>
+        <button type="button" class="mini-btn" id="h-photo-btn">📸 Choose a photo</button>
+        <button type="button" class="mini-btn" id="h-photo-clear" hidden>✖ Remove</button>
+        <input type="file" id="h-photo" accept="image/*" hidden>
+      </div>
+    </div>
+    <div class="field">
       <label for="h-notes">Anything else about them?</label>
       <textarea id="h-notes" maxlength="300" placeholder="Loves puddles. Scared of plastic bags. Best mane in the barn."></textarea>
     </div>
@@ -487,9 +545,73 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
       <label for="r-note">Best moment?</label>
       <textarea id="r-note" maxlength="300" placeholder="We cantered for the first time!!"></textarea>
     </div>
+    <div class="field">
+      <label>Photo from the day (optional)</label>
+      <div class="photo-row">
+        <div class="photo-prev" id="r-photo-prev">📷</div>
+        <button type="button" class="mini-btn" id="r-photo-btn">📸 Choose a photo</button>
+        <button type="button" class="mini-btn" id="r-photo-clear" hidden>✖ Remove</button>
+        <input type="file" id="r-photo" accept="image/*" hidden>
+      </div>
+    </div>
     <div class="dlg-actions">
       <button type="button" class="ghost-btn" data-close>Never mind</button>
       <button type="submit" class="cta green">Save this ride! 🎉</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- GOAL DIALOG -->
+<dialog id="dlg-goal">
+  <form class="dlg-inner" id="form-goal" method="dialog">
+    <h2 id="goal-dlg-title">New goal! 🎯</h2>
+    <div class="field">
+      <label for="g-title">What do you want to do?</label>
+      <input type="text" id="g-title" required maxlength="60" placeholder="Canter without holding on, jump a crossrail…">
+    </div>
+    <div class="field">
+      <label>Pick a goal emoji</label>
+      <div class="pick-row" id="g-emoji"></div>
+    </div>
+    <div class="field">
+      <label for="g-target">How many practices to get there?</label>
+      <input type="number" id="g-target" min="1" max="100" value="5" required>
+    </div>
+    <div class="field">
+      <label for="g-note">Secret plan? (optional)</label>
+      <textarea id="g-note" maxlength="200" placeholder="Practice on Peanut every Saturday lesson"></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost-btn" data-close>Never mind</button>
+      <button type="submit" class="cta" id="goal-save-btn">Set my goal! 🎯</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- WISH DIALOG -->
+<dialog id="dlg-wish">
+  <form class="dlg-inner" id="form-wish" method="dialog">
+    <h2>Make a wish 🌠</h2>
+    <div class="field">
+      <label for="w-text">What are you wishing for?</label>
+      <input type="text" id="w-text" required maxlength="60" placeholder="A palomino pony, sparkly stirrups, a beach ride…">
+    </div>
+    <div class="field">
+      <label>What kind of wish?</label>
+      <div class="pick-row" id="w-type">
+        <label><input type="radio" name="wtype" value="🐴 A horse" checked><span class="pick">🐴 A horse</span></label>
+        <label><input type="radio" name="wtype" value="🎽 Gear"><span class="pick">🎽 Gear</span></label>
+        <label><input type="radio" name="wtype" value="🗺️ An adventure"><span class="pick">🗺️ An adventure</span></label>
+        <label><input type="radio" name="wtype" value="✨ Something else"><span class="pick">✨ Something else</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="w-why">Why do you want it?</label>
+      <textarea id="w-why" maxlength="200" placeholder="Golden horses are the fastest. Probably."></textarea>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="ghost-btn" data-close>Never mind</button>
+      <button type="submit" class="cta">Wish it! 🌠</button>
     </div>
   </form>
 </dialog>
@@ -566,16 +688,28 @@ const BADGES=[
   {id:'trail5',  emoji:'🌲', name:'Trail Blazer',      desc:'Go on 5 trail rides',                  test:s=>s.rides.filter(r=>r.activity==='trail').length>=5},
   {id:'allround',emoji:'🎪', name:'All-Rounder',       desc:'Try 5 different activities',           test:s=>new Set(s.rides.map(r=>r.activity)).size>=5},
   {id:'shine',   emoji:'🧼', name:'Sparkle & Shine',   desc:'Log a grooming day',                   test:s=>s.rides.some(r=>r.activity==='groom')},
-  {id:'magic',   emoji:'🦄', name:'Best Day Ever',     desc:'Have a MAGICAL (🦄) ride',             test:s=>s.rides.some(r=>r.mood===5)}
+  {id:'magic',   emoji:'🦄', name:'Best Day Ever',     desc:'Have a MAGICAL (🦄) ride',             test:s=>s.rides.some(r=>r.mood===5)},
+  {id:'goal1',   emoji:'🎯', name:'Goal Getter',       desc:'Complete your first riding goal',      test:s=>s.goals.some(g=>g.done)},
+  {id:'goal5',   emoji:'🚀', name:'Dream Chaser',      desc:'Complete 5 riding goals',              test:s=>s.goals.filter(g=>g.done).length>=5},
+  {id:'wish1',   emoji:'🌠', name:'Wish Come True',    desc:'One of your wishes comes true',        test:s=>s.wishes.some(w=>w.granted)},
+  {id:'photo',   emoji:'📸', name:'Say Neigh-se!',     desc:'Add a photo to a horse or a ride',     test:s=>s.horses.some(h=>h.photo)||s.rides.some(r=>r.photo)}
 ];
+const GOAL_EMOJIS=['🏇','🦄','⭐','🏆','🎪','🌈','💪','🎯','🐴','✨'];
 
+function normalize(s){
+  if(!s||!Array.isArray(s.horses)||!Array.isArray(s.rides))return null;
+  s.rider=s.rider||'';
+  s.goals=Array.isArray(s.goals)?s.goals:[];
+  s.wishes=Array.isArray(s.wishes)?s.wishes:[];
+  return s;
+}
 let state=load();
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
-    if(raw){const s=JSON.parse(raw); if(s&&Array.isArray(s.horses)&&Array.isArray(s.rides))return s;}
+    if(raw){const s=normalize(JSON.parse(raw)); if(s)return s;}
   }catch(e){}
-  return {rider:'',horses:[],rides:[]};
+  return {rider:'',horses:[],rides:[],goals:[],wishes:[]};
 }
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast('Uh oh — couldn’t save. Storage might be full!')}}
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -596,6 +730,10 @@ function checkNewBadges(){
 function coatBG(id){const c=COATS.find(c=>c.id===id)||COATS[0];return c.bg}
 function horseById(id){return state.horses.find(h=>h.id===id)}
 function rideCount(id){return state.rides.filter(r=>r.horseId===id).length}
+function avatarHTML(h){
+  if(h&&h.photo)return `<div class="avatar has-photo" style="background-image:url(${h.photo})"></div>`;
+  return `<div class="avatar" style="background:${h?coatBG(h.coat):'var(--card-2)'}">${h?(SIZE_EMOJI[h.size]||'🐴'):'🐴'}</div>`;
+}
 
 function render(){
   // stats
@@ -605,7 +743,124 @@ function render(){
   $('#stat-hours').textContent=(mins/60).toFixed(mins&&mins<60?1:0).replace(/\.0$/,'');
   $('#stat-badges').textContent=earnedBadges().length;
   $('#rider-btn').textContent=state.rider||'you';
-  renderStable();renderJournal();renderBadges();
+  renderStable();renderJournal();renderGoals();renderWishes();renderBadges();
+}
+
+function renderGoals(){
+  const g=$('#goals-grid');
+  const active=state.goals.filter(x=>!x.done);
+  const done=state.goals.filter(x=>x.done);
+  if(!active.length&&!done.length){
+    g.innerHTML=`<div class="empty" style="grid-column:1/-1">
+      <div class="big">🎯🐴</div>
+      <h3>No goals yet!</h3>
+      <p>What's the next big thing you want to do in the saddle?</p>
+      <button class="cta" id="empty-add-goal">+ Set my first goal</button>
+    </div>`;
+    $('#empty-add-goal').addEventListener('click',()=>openGoalDialog());
+  }else{
+    g.innerHTML=active.map(goal=>{
+      const pct=Math.min(100,Math.round(goal.count/goal.target*100));
+      return `<article class="card goal-card">
+        <div class="goal-top"><span class="goal-emoji">${goal.emoji}</span><h3>${esc(goal.title)}</h3></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <p class="horse-meta"><b>${goal.count}</b> of <b>${goal.target}</b> practices 👣</p>
+        ${goal.note?`<p class="horse-meta">🤫 ${esc(goal.note)}</p>`:''}
+        <div class="card-actions">
+          <button class="cta" style="font-size:.95rem;padding:8px 16px" data-plus="${goal.id}">🐾 I practiced! +1</button>
+          <button class="mini-btn" data-editgoal="${goal.id}">✏️</button>
+          <button class="mini-btn" data-delgoal="${goal.id}">🗑️</button>
+        </div>
+      </article>`;
+    }).join('')+(active.length?`<button class="add-card" id="grid-add-goal"><span><span class="big">➕🎯</span>Add another goal</span></button>`:'');
+    const addBtn=$('#grid-add-goal');if(addBtn)addBtn.addEventListener('click',()=>openGoalDialog());
+    g.querySelectorAll('[data-plus]').forEach(b=>b.addEventListener('click',()=>{
+      const goal=state.goals.find(x=>x.id===b.dataset.plus);
+      goal.count++;
+      if(goal.count>=goal.target){
+        goal.done=true;goal.doneDate=new Date().toISOString().slice(0,10);
+        toast(`🏆 GOAL COMPLETE: ${goal.title}! You are AMAZING!`);confetti(140);
+      }else{
+        toast(`Nice! ${goal.target-goal.count} to go ${goal.emoji}`);confetti(20);
+      }
+      persist();render();checkNewBadges();
+    }));
+    g.querySelectorAll('[data-editgoal]').forEach(b=>b.addEventListener('click',()=>openGoalDialog(b.dataset.editgoal)));
+    g.querySelectorAll('[data-delgoal]').forEach(b=>b.addEventListener('click',()=>{
+      const goal=state.goals.find(x=>x.id===b.dataset.delgoal);
+      if(confirm(`Let go of the goal “${goal.title}”?`)){
+        state.goals=state.goals.filter(x=>x.id!==goal.id);persist();render();
+      }
+    }));
+  }
+  $('#goals-done-wrap').hidden=!done.length;
+  $('#goals-done').innerHTML=done.map(goal=>`<article class="card goal-card done-card">
+    <div class="goal-top"><span class="goal-emoji">${goal.emoji}</span><h3>${esc(goal.title)}</h3></div>
+    <p class="horse-meta">Crushed on <b>${new Date(goal.doneDate+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</b> 🎉</p>
+    <div class="card-actions">
+      <button class="mini-btn" data-againgoal="${goal.id}">🔁 Do it again</button>
+      <button class="mini-btn" data-delgoal2="${goal.id}">🗑️</button>
+    </div>
+  </article>`).join('');
+  $('#goals-done').querySelectorAll('[data-againgoal]').forEach(b=>b.addEventListener('click',()=>{
+    const goal=state.goals.find(x=>x.id===b.dataset.againgoal);
+    goal.done=false;goal.count=0;delete goal.doneDate;
+    persist();render();toast(`Back on it! ${goal.emoji}`);
+  }));
+  $('#goals-done').querySelectorAll('[data-delgoal2]').forEach(b=>b.addEventListener('click',()=>{
+    if(confirm('Remove this completed goal?')){
+      state.goals=state.goals.filter(x=>x.id!==b.dataset.delgoal2);persist();render();
+    }
+  }));
+}
+
+function renderWishes(){
+  const g=$('#wishes-grid');
+  const open=state.wishes.filter(w=>!w.granted);
+  const granted=state.wishes.filter(w=>w.granted);
+  if(!open.length&&!granted.length){
+    g.innerHTML=`<div class="empty" style="grid-column:1/-1">
+      <div class="big">🌠🐴</div>
+      <h3>No wishes yet!</h3>
+      <p>Dream horses, sparkly gear, big adventures — wish away!</p>
+      <button class="cta" id="empty-add-wish">+ Make my first wish</button>
+    </div>`;
+    $('#empty-add-wish').addEventListener('click',()=>openWishDialog());
+  }else{
+    g.innerHTML=open.map(w=>`<article class="card wish-card">
+      <div class="chips"><span class="chip gold">${esc(w.type)}</span></div>
+      <h3>${esc(w.text)}</h3>
+      ${w.why?`<p class="wish-why">${esc(w.why)}</p>`:''}
+      <div class="card-actions">
+        <button class="cta green" style="font-size:.95rem;padding:8px 16px" data-grant="${w.id}">It came true! 🎉</button>
+        <button class="mini-btn" data-delwish="${w.id}">🗑️</button>
+      </div>
+    </article>`).join('')+(open.length?`<button class="add-card" id="grid-add-wish"><span><span class="big">➕🌠</span>Make another wish</span></button>`:'');
+    const addBtn=$('#grid-add-wish');if(addBtn)addBtn.addEventListener('click',()=>openWishDialog());
+    g.querySelectorAll('[data-grant]').forEach(b=>b.addEventListener('click',()=>{
+      const w=state.wishes.find(x=>x.id===b.dataset.grant);
+      w.granted=true;w.grantedDate=new Date().toISOString().slice(0,10);
+      toast(`🌠 A wish came true: ${w.text}!`);confetti(140);
+      persist();render();checkNewBadges();
+    }));
+    g.querySelectorAll('[data-delwish]').forEach(b=>b.addEventListener('click',()=>{
+      if(confirm('Un-wish this wish?')){
+        state.wishes=state.wishes.filter(x=>x.id!==b.dataset.delwish);persist();render();
+      }
+    }));
+  }
+  $('#wishes-done-wrap').hidden=!granted.length;
+  $('#wishes-done').innerHTML=granted.map(w=>`<article class="card wish-card granted">
+    <div class="chips"><span class="chip gold">${esc(w.type)}</span></div>
+    <h3>⭐ ${esc(w.text)}</h3>
+    <p class="horse-meta">Came true on <b>${new Date(w.grantedDate+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</b></p>
+    <div class="card-actions"><button class="mini-btn" data-delwish2="${w.id}">🗑️</button></div>
+  </article>`).join('');
+  $('#wishes-done').querySelectorAll('[data-delwish2]').forEach(b=>b.addEventListener('click',()=>{
+    if(confirm('Remove this granted wish?')){
+      state.wishes=state.wishes.filter(x=>x.id!==b.dataset.delwish2);persist();render();
+    }
+  }));
 }
 
 function renderStable(){
@@ -624,7 +879,7 @@ function renderStable(){
     const n=rideCount(h.id);
     return `<article class="card horse-card">
       <div class="horse-head">
-        <div class="avatar" style="background:${coatBG(h.coat)}">${SIZE_EMOJI[h.size]||'🐴'}</div>
+        ${avatarHTML(h)}
         <div>
           <h3>${esc(h.name)}</h3>
           <p class="horse-sub">${esc(h.breed||'Mystery breed')} · ${esc(h.size)}</p>
@@ -672,7 +927,7 @@ function renderJournal(){
     const h=horseById(r.horseId);
     const act=ACTIVITIES.find(a=>a.id===r.activity)||ACTIVITIES[0];
     html+=`<article class="card ride">
-      <div class="avatar" style="background:${h?coatBG(h.coat):'var(--card-2)'}">${h?(SIZE_EMOJI[h.size]||'🐴'):'🐴'}</div>
+      ${avatarHTML(h)}
       <div class="ride-body">
         <div class="ride-top">
           <h3>${act.emoji} ${act.name} with ${esc(h?h.name:'a mystery horse')}</h3>
@@ -683,6 +938,7 @@ function renderJournal(){
           <span class="chip gold">${MOODS[r.mood]||'😊'} ${['','Sleepy','Okay','Good','Amazing','MAGICAL'][r.mood]||''}</span>
         </div>
         ${r.note?`<p class="ride-note">${esc(r.note)}</p>`:''}
+        ${r.photo?`<img class="ride-photo" src="${r.photo}" alt="Photo from this ride">`:''}
       </div>
       <button class="del" data-delride="${r.id}" title="Delete this ride">✖</button>
     </article>`;
@@ -735,6 +991,8 @@ function openHorseDialog(id){
   document.querySelectorAll('#h-traits input').forEach(i=>i.checked=!!(h&&h.traits.includes(i.value)));
   const treatEl=document.querySelector(`#h-treat input[value="${h?h.treat:'🍎 Apples'}"]`);
   (treatEl||document.querySelector('#h-treat input')).checked=true;
+  pendingHorsePhoto=h&&h.photo?h.photo:null;
+  setPhotoPrev('#h-photo-prev','#h-photo-clear',pendingHorsePhoto,'🐴');
   dlgHorse.showModal();
 }
 $('#btn-add-horse').addEventListener('click',()=>openHorseDialog());
@@ -746,7 +1004,8 @@ $('#form-horse').addEventListener('submit',e=>{
     coat:document.querySelector('#h-coat input:checked').value,
     traits:[...document.querySelectorAll('#h-traits input:checked')].map(i=>i.value),
     treat:document.querySelector('#h-treat input:checked').value,
-    notes:$('#h-notes').value.trim()
+    notes:$('#h-notes').value.trim(),
+    photo:pendingHorsePhoto
   };
   if(editingHorse){Object.assign(horseById(editingHorse),data);toast(`${data.name} updated! ✨`)}
   else{state.horses.push({id:uid(),...data});toast(`Welcome to the stable, ${data.name}! 🎉`);confetti(70)}
@@ -761,6 +1020,8 @@ function openRideDialog(){
   $('#r-horse').innerHTML=state.horses.map(h=>`<option value="${h.id}">${esc(h.name)}</option>`).join('');
   $('#r-date').value=new Date().toISOString().slice(0,10);
   $('#r-note').value='';
+  pendingRidePhoto=null;
+  setPhotoPrev('#r-photo-prev','#r-photo-clear',null,'📷');
   dlgRide.showModal();
 }
 $('#btn-add-ride').addEventListener('click',openRideDialog);
@@ -772,7 +1033,8 @@ $('#form-ride').addEventListener('submit',e=>{
     activity:document.querySelector('#r-activity input:checked').value,
     minutes:Math.max(1,parseInt($('#r-mins').value,10)||30),
     mood:parseInt(document.querySelector('#r-mood input:checked').value,10),
-    note:$('#r-note').value.trim()
+    note:$('#r-note').value.trim(),
+    photo:pendingRidePhoto
   };
   state.rides.push(ride);
   persist();render();
@@ -781,6 +1043,95 @@ $('#form-ride').addEventListener('submit',e=>{
   checkNewBadges();
   switchTab('journal');
 });
+
+/* ================= goal dialog ================= */
+const dlgGoal=$('#dlg-goal');let editingGoal=null;
+$('#g-emoji').innerHTML=GOAL_EMOJIS.map((e,i)=>`<label><input type="radio" name="gemoji" value="${e}" ${i===0?'checked':''}><span class="pick emoji">${e}</span></label>`).join('');
+function openGoalDialog(id){
+  editingGoal=id||null;
+  const goal=id?state.goals.find(x=>x.id===id):null;
+  $('#goal-dlg-title').textContent=goal?'Edit goal ✏️':'New goal! 🎯';
+  $('#goal-save-btn').textContent=goal?'Save changes 💾':'Set my goal! 🎯';
+  $('#g-title').value=goal?goal.title:'';
+  $('#g-target').value=goal?goal.target:5;
+  $('#g-note').value=goal?goal.note:'';
+  const em=document.querySelector(`#g-emoji input[value="${goal?goal.emoji:GOAL_EMOJIS[0]}"]`);
+  (em||document.querySelector('#g-emoji input')).checked=true;
+  dlgGoal.showModal();
+}
+$('#btn-add-goal').addEventListener('click',()=>openGoalDialog());
+$('#form-goal').addEventListener('submit',()=>{
+  const data={
+    title:$('#g-title').value.trim()||'My mystery goal',
+    emoji:document.querySelector('#g-emoji input:checked').value,
+    target:Math.min(100,Math.max(1,parseInt($('#g-target').value,10)||5)),
+    note:$('#g-note').value.trim()
+  };
+  if(editingGoal){
+    const goal=state.goals.find(x=>x.id===editingGoal);
+    Object.assign(goal,data);
+    if(goal.count>=goal.target&&!goal.done){goal.done=true;goal.doneDate=new Date().toISOString().slice(0,10);confetti(140)}
+    toast('Goal updated! ✨');
+  }else{
+    state.goals.push({id:uid(),count:0,done:false,...data});
+    toast(`Goal set! You've got this ${data.emoji}`);confetti(50);
+  }
+  persist();render();checkNewBadges();
+});
+
+/* ================= wish dialog ================= */
+function openWishDialog(){
+  $('#form-wish').reset();
+  $('#dlg-wish').showModal();
+}
+$('#btn-add-wish').addEventListener('click',openWishDialog);
+$('#form-wish').addEventListener('submit',()=>{
+  state.wishes.push({
+    id:uid(),granted:false,
+    text:$('#w-text').value.trim()||'A mystery wish',
+    type:document.querySelector('#w-type input:checked').value,
+    why:$('#w-why').value.trim()
+  });
+  persist();render();
+  toast('Wish made! 🌠 Fingers (and hooves) crossed!');confetti(50);
+});
+
+/* ================= photos ================= */
+function shrinkImage(file,max,cb){
+  const img=new Image();
+  img.onload=()=>{
+    const s=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.width*s));
+    c.height=Math.max(1,Math.round(img.height*s));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(img.src);
+    cb(c.toDataURL('image/jpeg',.82));
+  };
+  img.onerror=()=>{URL.revokeObjectURL(img.src);toast('Hmm, that photo didn’t work 🤔')};
+  img.src=URL.createObjectURL(file);
+}
+let pendingHorsePhoto=null,pendingRidePhoto=null;
+function setPhotoPrev(prevSel,clearSel,url,emoji){
+  const prev=$(prevSel);
+  prev.style.backgroundImage=url?`url(${url})`:'';
+  prev.textContent=url?'':emoji;
+  $(clearSel).hidden=!url;
+}
+$('#h-photo-btn').addEventListener('click',()=>$('#h-photo').click());
+$('#h-photo').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  shrinkImage(f,640,url=>{pendingHorsePhoto=url;setPhotoPrev('#h-photo-prev','#h-photo-clear',url,'🐴')});
+  e.target.value='';
+});
+$('#h-photo-clear').addEventListener('click',()=>{pendingHorsePhoto=null;setPhotoPrev('#h-photo-prev','#h-photo-clear',null,'🐴')});
+$('#r-photo-btn').addEventListener('click',()=>$('#r-photo').click());
+$('#r-photo').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  shrinkImage(f,640,url=>{pendingRidePhoto=url;setPhotoPrev('#r-photo-prev','#r-photo-clear',url,'📷')});
+  e.target.value='';
+});
+$('#r-photo-clear').addEventListener('click',()=>{pendingRidePhoto=null;setPhotoPrev('#r-photo-prev','#r-photo-clear',null,'📷')});
 
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
 
@@ -860,8 +1211,8 @@ $('#file-import').addEventListener('change',e=>{
   const reader=new FileReader();
   reader.onload=()=>{
     try{
-      const s=JSON.parse(reader.result);
-      if(!s||!Array.isArray(s.horses)||!Array.isArray(s.rides))throw new Error('bad');
+      const s=normalize(JSON.parse(reader.result));
+      if(!s)throw new Error('bad');
       if(confirm('Load this barn file? It replaces what’s here now.')){
         state=s;persist();knownEarned=new Set(earnedBadges().map(b=>b.id));render();
         toast('Barn loaded! Welcome back 🐴');confetti(60);
