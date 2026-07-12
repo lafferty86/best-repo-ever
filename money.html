@@ -258,6 +258,44 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 }
 #toast.show{transform:translateX(-50%) translateY(0);visibility:visible}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+/* ============ sheet modal ============ */
+.modal-back{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;display:none;
+  align-items:flex-start;justify-content:center;overflow:auto;padding:34px 14px;
+}
+.modal-back.show{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--ring);border-radius:18px;
+  box-shadow:var(--shadow);max-width:660px;width:100%;padding:22px;
+}
+.modal h2{margin:0;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+.modal h2 .x{margin-left:auto;background:none;border:none;font-size:1.15rem;color:var(--ink-mut);padding:4px 8px}
+.modal .sub{color:var(--ink-2);font-size:.88rem;margin:6px 0 14px}
+.modal ol{margin:0 0 14px;padding-left:20px;font-size:.9rem;color:var(--ink)}
+.modal ol li{margin-bottom:7px}
+.modal ol li .mini-note{color:var(--ink-mut);font-size:.8rem}
+.modal details{background:var(--surface-2);border:1px solid var(--ring);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.modal details summary{cursor:pointer;font-weight:700;font-size:.88rem}
+.modal pre{
+  max-height:240px;overflow:auto;font-size:.72rem;line-height:1.4;background:var(--paper);
+  border:1px solid var(--ring);border-radius:10px;padding:10px;margin:10px 0;
+}
+.modal .row2{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.modal .row2 .field{flex:1;min-width:200px}
+.modal .field input[type=text],.modal .field input[type=url],.modal .field input[type=password]{
+  width:100%;background:var(--surface-2);border:1px solid var(--ring);border-radius:10px;
+  padding:9px 10px;font-size:.88rem;
+}
+.modal .btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.solid-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 15px;font-weight:700;font-size:.88rem}
+.line-btn{background:none;border:1px solid var(--ring);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:600;font-size:.88rem}
+.copy-btn{background:var(--accent-soft);color:var(--accent);border:none;border-radius:8px;padding:6px 12px;font-weight:700;font-size:.8rem}
+.autorow{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600;margin:12px 0 4px}
+.autorow input{width:18px;height:18px;accent-color:var(--accent)}
+#sheet-status{font-size:.8rem;color:var(--ink-mut);margin-top:10px}
+#sheet-status.ok{color:var(--good-text)}
+.divider{border:none;border-top:1px solid var(--grid);margin:16px 0}
 .fi-banner{
   background:linear-gradient(135deg,var(--good) 0%, #0e7a4e 100%);color:#fff;
   border-radius:16px;padding:16px 20px;margin-bottom:18px;font-weight:700;display:none;
@@ -283,6 +321,7 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
       </div>
       <div class="head-actions">
         <button class="ghost-btn" id="btn-theme" title="Cycle theme">🌗 Theme</button>
+        <button class="ghost-btn" id="btn-sheet" title="Sync with Google Sheets">📊 Sheet</button>
         <button class="ghost-btn" id="btn-export">💾 Save to file</button>
         <button class="ghost-btn" id="btn-import">📂 Load from file</button>
         <input type="file" id="file-import" accept=".json,application/json" hidden>
@@ -376,6 +415,42 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     <button class="danger-btn" id="btn-reset">Reset everything</button>
   </div>
 </footer>
+
+<div class="modal-back" id="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="modal">
+    <h2 id="sheet-title">📊 Google Sheet sync <button class="x" id="sheet-close" aria-label="Close">✕</button></h2>
+    <p class="sub">Push your dashboard, checklist, and a progress history to a Google Sheet — and pull it back on any device. One-time setup, ~2 minutes.</p>
+    <ol>
+      <li>Open your Google Sheet → <b>Extensions → Apps Script</b>.</li>
+      <li>Delete any starter code, paste the script below, and save.</li>
+      <li><b>Deploy → New deployment → Web app</b> — Execute as: <b>Me</b>, Who has access: <b>Anyone</b>. <span class="mini-note">"Anyone" means anyone with the secret deployment URL — keep it private, or set a passphrase below for an extra lock.</span></li>
+      <li>Copy the <b>Web app URL</b> (ends in <code>/exec</code>) and paste it here.</li>
+    </ol>
+    <details>
+      <summary>The Apps Script code <button class="copy-btn" id="gs-copy">📋 Copy code</button></summary>
+      <pre id="gs-code"></pre>
+    </details>
+    <div class="row2">
+      <div class="field" style="flex:2">
+        <label for="sheet-url">Web app URL</label>
+        <input type="url" id="sheet-url" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+      <div class="field">
+        <label for="sheet-secret">Passphrase (optional)</label>
+        <input type="password" id="sheet-secret" placeholder="matches SECRET in the script">
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="solid-btn" id="sheet-push">⬆️ Push to Sheet</button>
+      <button class="line-btn" id="sheet-pull">⬇️ Pull from Sheet</button>
+    </div>
+    <label class="autorow"><input type="checkbox" id="sheet-auto"> Auto-push a few seconds after every change</label>
+    <div id="sheet-status"></div>
+    <hr class="divider">
+    <p class="sub" style="margin-bottom:8px"><b>No-setup option:</b> download the checklist + summary as CSV and use <i>File → Import</i> in Google Sheets.</p>
+    <button class="line-btn" id="csv-export">📄 Download CSV</button>
+  </div>
+</div>
 
 <div id="toast"></div>
 <canvas id="confetti"></canvas>
@@ -494,6 +569,7 @@ const DEFAULTS={
   notes:{},        // areaId -> string
   open:{},         // areaId -> bool
   theme:'auto', tab:'dash', filter:'all',
+  sheet:{url:'',secret:'',auto:false,last:null},
 };
 let state=load();
 function load(){
@@ -501,10 +577,16 @@ function load(){
     const raw=localStorage.getItem(LS_KEY);
     if(!raw) return structuredClone(DEFAULTS);
     const s=JSON.parse(raw);
-    return Object.assign(structuredClone(DEFAULTS),s,{inputs:Object.assign({},DEFAULTS.inputs,s.inputs)});
+    return Object.assign(structuredClone(DEFAULTS),s,{
+      inputs:Object.assign({},DEFAULTS.inputs,s.inputs),
+      sheet:Object.assign({},DEFAULTS.sheet,s.sheet),
+    });
   }catch(e){return structuredClone(DEFAULTS)}
 }
-function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+function persist(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}
+  scheduleAutoPush();
+}
 const uid=()=> 'c'+Math.random().toString(36).slice(2,9);
 
 function allSteps(area){
@@ -903,8 +985,11 @@ document.getElementById('file-import').addEventListener('change',e=>{
     try{
       const s=JSON.parse(rd.result);
       if(!s||typeof s!=='object'||!s.inputs)throw 0;
-      state=Object.assign(structuredClone(DEFAULTS),s,{inputs:Object.assign({},DEFAULTS.inputs,s.inputs)});
-      persist();fillInputs();applyTheme();applyTab();renderAll();
+      state=Object.assign(structuredClone(DEFAULTS),s,{
+        inputs:Object.assign({},DEFAULTS.inputs,s.inputs),
+        sheet:Object.assign({},DEFAULTS.sheet,s.sheet),
+      });
+      persist();fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
       toast('Backup loaded 📂');confetti(60);
     }catch(err){toast('That file doesn’t look like a FIREside backup 😬')}
   };
@@ -915,9 +1000,206 @@ document.getElementById('file-import').addEventListener('change',e=>{
 document.getElementById('btn-reset').addEventListener('click',()=>{
   if(!confirm('Reset ALL FIREside data on this device? (Save to file first if unsure.)'))return;
   state=structuredClone(DEFAULTS);persist();
-  fillInputs();applyTheme();applyTab();renderAll();
+  fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
   toast('Fresh start ✨');
 });
+
+/* ================== google sheet sync ================== */
+const GS_CODE=`/** FIREside -> Google Sheets sync bridge.
+ * 1. In your Google Sheet: Extensions -> Apps Script. Paste this file, save.
+ * 2. Deploy -> New deployment -> Web app. Execute as: Me. Access: Anyone.
+ * 3. Copy the Web app URL (ends in /exec) into FIREside's Sheet panel.
+ * Optional: set SECRET to a passphrase and enter the same one in FIREside.
+ */
+const SECRET = '';
+
+function doPost(e){
+  try{
+    const d = JSON.parse(e.postData.contents);
+    if(SECRET && d.secret !== SECRET) return json_({ok:false, error:'bad secret'});
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // raw app state, kept hidden, so FIREside can Pull it back
+    const raw = sheet_(ss, '_fireside_raw');
+    raw.getRange(1,1).setValue(JSON.stringify(d.state));
+    try{ raw.hideSheet(); }catch(err){}
+
+    // Dashboard tab
+    const s = d.summary;
+    const dash = sheet_(ss, 'Dashboard');
+    dash.clear();
+    const kv = [
+      ['FIREside dashboard', 'updated ' + d.ts],
+      ['Monthly take-home income', s.income],
+      ['Monthly spending', s.spend],
+      ['Invested assets', s.assets],
+      ['Savings rate %', s.savingsRatePct],
+      ['FIRE number', s.fireNumber],
+      ['Years to FI (optimized)', s.yearsToFI],
+      ['Years to FI (current plan)', s.baseYearsToFI],
+      ['Spending trimmed $/mo', s.spendTrimmedMo],
+      ['Extra invested $/mo', s.extraInvestedMo],
+      ['Steps done', s.stepsDone + ' / ' + s.stepsTotal],
+      ['Potential still unchecked $/mo', s.potentialMo],
+    ];
+    dash.getRange(1,1,kv.length,2).setValues(kv);
+    dash.getRange(1,1,1,2).setFontWeight('bold');
+    dash.autoResizeColumns(1,2);
+
+    // Checklist tab
+    const cl = sheet_(ss, 'Checklist');
+    cl.clear();
+    cl.getRange(1,1,1,6).setValues([['Area','Step','Done','Est $/mo','Type','Quick win']]).setFontWeight('bold');
+    if(d.rows && d.rows.length) cl.getRange(2,1,d.rows.length,6).setValues(d.rows);
+    cl.setFrozenRows(1);
+    cl.autoResizeColumns(1,6);
+
+    // History tab: one row per push, a progress log over time
+    const h = sheet_(ss, 'History');
+    if(h.getLastRow() === 0) h.appendRow(['Timestamp','Steps done','Found $/mo','Years to FI','FIRE number']);
+    h.appendRow([d.ts, s.stepsDone, s.spendTrimmedMo + s.extraInvestedMo, s.yearsToFI, s.fireNumber]);
+
+    return json_({ok:true});
+  }catch(err){
+    return json_({ok:false, error:String(err)});
+  }
+}
+
+function doGet(e){
+  if(SECRET && (!e.parameter || e.parameter.secret !== SECRET)) return json_({ok:false, error:'bad secret'});
+  const raw = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('_fireside_raw');
+  const txt = raw ? String(raw.getRange(1,1).getValue() || '') : '';
+  return ContentService.createTextOutput(txt ? '{"ok":true,"state":' + txt + '}' : '{"ok":false,"error":"no data pushed yet"}')
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function sheet_(ss, name){ return ss.getSheetByName(name) || ss.insertSheet(name); }
+function json_(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }`;
+
+function sheetPayload(){
+  const c=calc();
+  const rows=[];
+  for(const a of AREAS)for(const s of allSteps(a)){
+    const st=stepState(s);
+    rows.push([a.title,s.text,st.done?'YES':'',num(st.est),s.type==='boost'?'invest more':'cut spending',s.quick?'⚡':'']);
+  }
+  return {
+    secret:state.sheet.secret||'',
+    ts:new Date().toISOString().replace('T',' ').slice(0,19)+' UTC',
+    state,
+    summary:{
+      income:c.income,spend:c.spend,assets:c.assets,
+      savingsRatePct:c.income>0?Math.round(c.optContrib/c.income*100):0,
+      fireNumber:isFinite(c.optTarget)?Math.round(c.optTarget):null,
+      yearsToFI:isFinite(c.optYears)?+c.optYears.toFixed(1):null,
+      baseYearsToFI:isFinite(c.baseYears)?+c.baseYears.toFixed(1):null,
+      spendTrimmedMo:Math.round(c.spendCut),extraInvestedMo:Math.round(c.boost),
+      stepsDone:c.done,stepsTotal:c.total,potentialMo:Math.round(c.potential),
+    },
+    rows,
+  };
+}
+let _pushing=false,_ap=null;
+function scheduleAutoPush(){
+  if(_pushing||!state.sheet||!state.sheet.auto||!state.sheet.url)return;
+  clearTimeout(_ap);_ap=setTimeout(()=>sheetPush(false),4000);
+}
+function setSheetStatus(msg,ok){
+  const el=document.getElementById('sheet-status');
+  if(msg!==undefined){el.textContent=msg;el.className=ok?'ok':'';return}
+  el.className=state.sheet.last?'ok':'';
+  el.textContent=state.sheet.last?('Last synced: '+new Date(state.sheet.last).toLocaleString()):'Not synced yet.';
+}
+async function sheetPush(manual){
+  const url=(state.sheet.url||'').trim();
+  if(!url){openSheetModal();toast('Paste your Web app URL first 📊');return}
+  if(_pushing)return;
+  _pushing=true;setSheetStatus('Pushing to Google Sheet…');
+  try{
+    const res=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(sheetPayload()),
+    });
+    const j=await res.json().catch(()=>null);
+    if(res.ok&&j&&j.ok){
+      state.sheet.last=Date.now();
+      persist();setSheetStatus(); // _pushing still true → no auto-push re-schedule loop
+      if(manual)toast('Pushed to Google Sheet ✅');
+    }else{
+      throw new Error((j&&j.error)||('HTTP '+res.status));
+    }
+  }catch(err){
+    setSheetStatus('Push failed: '+err.message,false);
+    if(manual)toast('Sheet push failed 😬 — see the Sheet panel');
+  }
+  _pushing=false;
+}
+async function sheetPull(){
+  const url=(state.sheet.url||'').trim();
+  if(!url){toast('Paste your Web app URL first 📊');return}
+  setSheetStatus('Pulling from Google Sheet…');
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const res=await fetch(url+sep+'secret='+encodeURIComponent(state.sheet.secret||''));
+    const j=await res.json();
+    if(!j||!j.ok||!j.state||!j.state.inputs)throw new Error((j&&j.error)||'no FIREside data in that sheet yet — Push first');
+    const keep=Object.assign({},state.sheet,{last:Date.now()});
+    state=Object.assign(structuredClone(DEFAULTS),j.state,{
+      inputs:Object.assign({},DEFAULTS.inputs,j.state.inputs),
+      sheet:keep,
+    });
+    persist();fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
+    setSheetStatus();toast('Loaded from Google Sheet 📥');confetti(50);
+  }catch(err){
+    setSheetStatus('Pull failed: '+err.message,false);
+    toast('Sheet pull failed 😬 — see the Sheet panel');
+  }
+}
+function exportCSV(){
+  const p=sheetPayload();
+  const lines=[['Area','Step','Done','Est $/mo','Type','Quick win'],...p.rows,[],['Summary','']];
+  for(const[k,v]of Object.entries(p.summary))lines.push([k,v===null?'':v]);
+  const csv=lines.map(row=>row.map(cell=>{
+    const s=String(cell??'');
+    return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fireside-checklist-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
+  toast('CSV downloaded — File → Import in Google Sheets 📄');
+}
+function fillSheetUI(){
+  document.getElementById('sheet-url').value=state.sheet.url||'';
+  document.getElementById('sheet-secret').value=state.sheet.secret||'';
+  document.getElementById('sheet-auto').checked=!!state.sheet.auto;
+  setSheetStatus();
+}
+function openSheetModal(){fillSheetUI();document.getElementById('sheet-modal').classList.add('show')}
+function closeSheetModal(){document.getElementById('sheet-modal').classList.remove('show')}
+document.getElementById('btn-sheet').addEventListener('click',openSheetModal);
+document.getElementById('sheet-close').addEventListener('click',closeSheetModal);
+document.getElementById('sheet-modal').addEventListener('click',e=>{if(e.target.id==='sheet-modal')closeSheetModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheetModal()});
+document.getElementById('gs-code').textContent=GS_CODE;
+document.getElementById('gs-copy').addEventListener('click',e=>{
+  e.preventDefault();e.stopPropagation();
+  (navigator.clipboard?navigator.clipboard.writeText(GS_CODE):Promise.reject()).then(
+    ()=>toast('Apps Script code copied 📋'),
+    ()=>{const r=document.createRange();r.selectNodeContents(document.getElementById('gs-code'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('Select + copy the highlighted code')}
+  );
+});
+document.getElementById('sheet-url').addEventListener('change',e=>{state.sheet.url=e.target.value.trim();persist();setSheetStatus()});
+document.getElementById('sheet-secret').addEventListener('change',e=>{state.sheet.secret=e.target.value;persist()});
+document.getElementById('sheet-auto').addEventListener('change',e=>{
+  state.sheet.auto=e.target.checked;persist();
+  toast(state.sheet.auto?'Auto-push on ✨ (a few seconds after each change)':'Auto-push off');
+});
+document.getElementById('sheet-push').addEventListener('click',()=>sheetPush(true));
+document.getElementById('sheet-pull').addEventListener('click',sheetPull);
+document.getElementById('csv-export').addEventListener('click',exportCSV);
 
 /* ================== toast & confetti ================== */
 let _tt=null;
@@ -954,7 +1236,7 @@ function tick(){
 }
 
 /* ================== boot ================== */
-applyTheme();applyTab();fillInputs();
+applyTheme();applyTab();fillInputs();fillSheetUI();
 document.querySelectorAll('.chip').forEach(ch=>ch.setAttribute('aria-pressed',String(ch.dataset.filter===state.filter)));
 renderAll();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{const c=calc();renderChart(c)});

@@ -12,6 +12,7 @@ A zero-install FIRE (Financial Independence, Retire Early) workspace focused on 
 - Every step has an **editable $/mo estimate** — check it off and watch your FIRE number shrink and your FI date move closer in real time (a sticky impact bar totals spending trimmed, extra invested, FIRE number reduction, and years shaved)
 - Filters (**to do / ⚡ quick wins / done**), add-your-own steps per area, and a notes field for quotes and numbers you gather
 - Saves automatically on the device (localStorage) with **Save/Load to file** backups, light/dark/auto themes, and confetti when you complete an area 🎉
+- **📊 Google Sheet sync** — push your dashboard, full checklist, and a progress-history log to a Google Sheet (and pull it back on any device). Click the **📊 Sheet** button in the app for the ~2-minute setup: paste [`google-sheets-sync.gs`](google-sheets-sync.gs) into your sheet's *Extensions → Apps Script*, deploy it as a web app, and drop the URL into FIREside. Supports manual push/pull, auto-push after changes, an optional passphrase, and a zero-setup **CSV download** fallback
 
 *Estimates are planning tools, not financial advice.*
 
