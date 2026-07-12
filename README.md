@@ -14,5 +14,6 @@ A super-fun, all-in-one horse journal for young riders — no install, no accoun
 - **Badge Wall** — 18 prize rosettes earned automatically (First Hoofprint, Trail Blazer, Goal Getter, Wish Come True…)
 - **Fun Stuff** — daily horse fact, dream-horse name generator, and a button that sends a pony galloping across the screen
 - Confetti when good things happen 🎉
+- **5 themes** via the 🎨 Theme button — Pony Party (playful classic), Unicorn Dream (pastel), Show Ring (classic hunter green & serif for older kids), Western Trail (desert & turquoise), and Midnight Canter (moody indigo for teens); each with light and dark variants
 
 Everything saves automatically on the device (localStorage), with **Save/Load barn to a file** buttons for backups or moving between devices. Works in light and dark mode.
