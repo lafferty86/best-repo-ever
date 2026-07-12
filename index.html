@@ -263,6 +263,37 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:8px 0 18px
 .stat:nth-child(3) b{color:var(--sky)}
 .stat:nth-child(4) b{color:var(--gold)}
 
+/* ============ horse profile page ============ */
+.stat{cursor:pointer;transition:transform .12s ease}
+.stat:hover{transform:translateY(-2px)}
+.horse-page-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.horse-hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.avatar-xl{width:116px;height:116px;border-radius:50%;display:grid;place-items:center;font-size:60px;flex:0 0 auto;border:4px solid var(--card);box-shadow:0 0 0 3px var(--rose),var(--shadow)}
+.avatar-xl.has-photo{background-position:center;background-size:cover}
+.horse-hero-info{flex:1;min-width:220px}
+.horse-hero-info h2{font-size:clamp(1.7rem,5vw,2.5rem);font-weight:800}
+.horse-hero-info .sub{color:var(--ink-soft);font-weight:800;margin:0 0 8px}
+.hero-facts{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.hero-facts p{margin:0;font-size:.95rem}
+.hero-facts b{color:var(--rose)}
+.horse-note{background:var(--sky-soft);border-radius:14px;padding:10px 14px;font-size:.95rem;margin-top:10px;position:relative}
+.horse-note::before{content:"💬 ";font-size:1rem}
+.horse-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.horse-section{margin-top:14px}
+.horse-section h3{font-size:1.15rem;font-weight:800;margin-bottom:10px}
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+.photo-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.photo-wall img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;border:2px solid var(--line);box-shadow:var(--shadow)}
+.mini-ride{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.mini-ride:last-child{border-bottom:none}
+.mini-ride .em{font-size:1.3rem;flex:0 0 auto}
+.mini-ride .what{flex:1;min-width:0}
+.mini-ride .what b{display:block;font-size:.92rem}
+.mini-ride .what span{font-size:.78rem;color:var(--ink-soft);font-weight:700}
+.mini-ride .mood{font-size:1.2rem}
+.horse-card .horse-head{cursor:pointer;border-radius:12px}
+.horse-card .horse-head:hover h3{color:var(--rose);text-decoration:underline wavy var(--rose) 2px;text-underline-offset:4px}
+
 /* ============ tabs ============ */
 nav.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px;margin-bottom:20px}
 .tab{
@@ -563,10 +594,10 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
   </header>
 
   <div class="stats" aria-label="My totals">
-    <div class="stat"><b id="stat-horses">0</b><span>Horses</span></div>
-    <div class="stat"><b id="stat-rides">0</b><span>Rides</span></div>
-    <div class="stat"><b id="stat-hours">0</b><span>Hours in saddle</span></div>
-    <div class="stat"><b id="stat-badges">0</b><span>Badges</span></div>
+    <div class="stat" role="button" tabindex="0" data-goto="stable"><b id="stat-horses">0</b><span>Horses</span></div>
+    <div class="stat" role="button" tabindex="0" data-goto="journal"><b id="stat-rides">0</b><span>Rides</span></div>
+    <div class="stat" role="button" tabindex="0" data-goto="stats"><b id="stat-hours">0</b><span>Hours in saddle</span></div>
+    <div class="stat" role="button" tabindex="0" data-goto="badges"><b id="stat-badges">0</b><span>Badges</span></div>
   </div>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
@@ -587,6 +618,11 @@ footer .data-btns{display:flex;gap:10px;justify-content:center;margin-bottom:10p
       <button class="cta" id="btn-add-horse">+ Add a horse</button>
     </div>
     <div id="stable-grid" class="grid"></div>
+  </section>
+
+  <!-- HORSE PROFILE PAGE -->
+  <section id="panel-horse" role="tabpanel" hidden>
+    <div id="horse-page"></div>
   </section>
 
   <!-- JOURNAL -->
@@ -1210,6 +1246,7 @@ function render(){
   $('#stat-badges').textContent=earnedBadges().length;
   $('#rider-btn').textContent=state.rider||'you';
   renderStable();renderJournal();renderGoals();renderWishes();renderBadges();renderStats();renderCal();
+  if(currentHorsePage)renderHorsePage();
   $('#quiz-best-chip').textContent=state.games.quizBest?`Best: ${state.games.quizBest}/5`:'Best: —';
   $('#mem-best-chip').textContent=state.games.bestMemory?`Best: ${state.games.bestMemory} flips`:'Best: —';
   $('#jump-best-chip').textContent=`Best: ${state.games.bestJump} fence${state.games.bestJump===1?'':'s'}`;
@@ -1347,7 +1384,7 @@ function renderStable(){
   g.innerHTML=state.horses.map(h=>{
     const n=rideCount(h.id);
     return `<article class="card horse-card">
-      <div class="horse-head">
+      <div class="horse-head" data-open="${h.id}" role="button" tabindex="0" title="Open ${esc(h.name)}'s page">
         ${avatarHTML(h)}
         <div>
           <h3>${esc(h.name)}</h3>
@@ -1367,6 +1404,11 @@ function renderStable(){
   $('#grid-add-horse').addEventListener('click',()=>openHorseDialog());
   g.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openHorseDialog(b.dataset.edit)));
   g.querySelectorAll('[data-care]').forEach(b=>b.addEventListener('click',()=>openCareDialog(b.dataset.care)));
+  g.querySelectorAll('[data-open]').forEach(el=>{
+    const go=()=>openHorsePage(el.dataset.open);
+    el.addEventListener('click',go);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+  });
   g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
     const h=horseById(b.dataset.del);const n=rideCount(h.id);
     if(confirm(`Say goodbye to ${h.name}?${n?` This also removes ${n} ride${n===1?'':'s'} from your journal.`:''}`)){
@@ -1443,6 +1485,11 @@ function switchTab(name){
   document.querySelectorAll('[role=tabpanel]').forEach(p=>p.hidden=(p.id!=='panel-'+name));
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+document.querySelectorAll('.stat[data-goto]').forEach(el=>{
+  const go=()=>switchTab(el.dataset.goto);
+  el.addEventListener('click',go);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+});
 
 /* ================= horse dialog ================= */
 const dlgHorse=$('#dlg-horse');let editingHorse=null;
@@ -1487,16 +1534,17 @@ $('#form-horse').addEventListener('submit',e=>{
 /* ================= ride dialog ================= */
 const dlgRide=$('#dlg-ride');
 $('#r-activity').innerHTML=ACTIVITIES.map((a,i)=>`<label><input type="radio" name="ract" value="${a.id}" ${i===0?'checked':''}><span class="pick">${a.emoji} ${a.name}</span></label>`).join('');
-function openRideDialog(){
+function openRideDialog(preselectId){
   if(!state.horses.length){toast('Add a horse to your stable first! 🐴');switchTab('stable');return}
   $('#r-horse').innerHTML=state.horses.map(h=>`<option value="${h.id}">${esc(h.name)}</option>`).join('');
+  if(preselectId&&horseById(preselectId))$('#r-horse').value=preselectId;
   $('#r-date').value=new Date().toISOString().slice(0,10);
   $('#r-note').value='';
   pendingRidePhoto=null;
   setPhotoPrev('#r-photo-prev','#r-photo-clear',null,'📷');
   dlgRide.showModal();
 }
-$('#btn-add-ride').addEventListener('click',openRideDialog);
+$('#btn-add-ride').addEventListener('click',()=>openRideDialog());
 $('#form-ride').addEventListener('submit',e=>{
   const ride={
     id:uid(),created:Date.now(),
@@ -1846,6 +1894,100 @@ jc.addEventListener('pointerdown',e=>{e.preventDefault();jumpInput()});
 document.addEventListener('keydown',e=>{
   if(e.code==='Space'&&$('#dlg-jump').open){e.preventDefault();jumpInput()}
 });
+
+/* ================= horse profile page ================= */
+let currentHorsePage=null;
+function openHorsePage(id){
+  currentHorsePage=id;
+  renderHorsePage();
+  switchTab('horse');
+  window.scrollTo({top:0,behavior:'auto'});
+}
+function renderHorsePage(){
+  const h=horseById(currentHorsePage);
+  const el=$('#horse-page');
+  if(!h){
+    currentHorsePage=null;el.innerHTML='';
+    if(!$('#panel-horse').hidden)switchTab('stable');
+    return;
+  }
+  const rides=state.rides.filter(r=>r.horseId===h.id).sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+  const mins=rides.reduce((a,r)=>a+r.minutes,0);
+  const magic=rides.filter(r=>r.mood===5).length;
+  const first=rides.length?rides[rides.length-1].date:null;
+  const daysFriends=first?Math.max(1,dayNum(todayStr())-dayNum(first)):null;
+  const actC={};rides.forEach(r=>actC[r.activity]=(actC[r.activity]||0)+1);
+  const actMax=Math.max(1,...Object.values(actC),1);
+  const actRows=ACTIVITIES.filter(a=>actC[a.id]).sort((a,b)=>actC[b.id]-actC[a.id]);
+  const bestMoments=rides.filter(r=>r.note).slice(0,3);
+  const photos=[...(h.photo?[h.photo]:[]),...rides.filter(r=>r.photo).map(r=>r.photo)];
+  const care=[...h.care].sort((a,b)=>b.date.localeCompare(a.date));
+  const avatar=h.photo
+    ?`<div class="avatar-xl has-photo" style="background-image:url(${h.photo})"></div>`
+    :`<div class="avatar-xl" style="background:${coatBG(h.coat)}">${SIZE_EMOJI[h.size]||'🐴'}</div>`;
+
+  el.innerHTML=`
+  <div class="horse-page-head">
+    <button class="mini-btn" id="horse-back">← My Stable</button>
+  </div>
+  <div class="card horse-hero">
+    ${avatar}
+    <div class="horse-hero-info">
+      <h2>${esc(h.name)}</h2>
+      <p class="sub">${esc(h.breed||'Mystery breed')} · ${esc(h.size)} · ${esc((COATS.find(c=>c.id===h.coat)||{}).name||'')} coat</p>
+      ${h.traits.length?`<div class="chips">${h.traits.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`:''}
+      <div class="hero-facts">
+        <p>Loves <b>${esc(h.treat)}</b></p>
+        ${first?`<p>Friends since <b>${new Date(first+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'})}</b> — that's <b>${daysFriends}</b> day${daysFriends===1?'':'s'} of friendship 💗</p>`:'<p>No rides together yet — the adventure is about to begin! ✨</p>'}
+      </div>
+      ${h.notes?`<div class="horse-note">${esc(h.notes)}</div>`:''}
+      <div class="horse-actions">
+        <button class="cta green" style="font-size:1rem;padding:10px 18px" id="horse-log-ride">🐎 Log a ride</button>
+        <button class="mini-btn" id="horse-edit">✏️ Edit</button>
+        <button class="mini-btn" id="horse-care">🩺 Add a care day</button>
+      </div>
+    </div>
+  </div>
+  <div class="stats horse-section">
+    <div class="stat"><b>${rides.length}</b><span>Rides together</span></div>
+    <div class="stat"><b>${mins}</b><span>Minutes</span></div>
+    <div class="stat"><b>${magic}</b><span>Magical rides 🦄</span></div>
+    <div class="stat"><b>${h.care.length}</b><span>Care days</span></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3 class="horse-section" style="margin-top:0">🎪 What we do together</h3>
+      ${actRows.length?actRows.map(a=>`<div class="hbar-row"><span class="lbl">${a.emoji} ${a.name}</span><div class="hbar"><i style="width:${Math.round(actC[a.id]/actMax*100)}%"></i></div><span class="val">${actC[a.id]}</span></div>`).join(''):'<p class="horse-meta">Log a ride and this fills up! 🐎</p>'}
+    </div>
+    <div class="card">
+      <h3 class="horse-section" style="margin-top:0">🩺 Care log</h3>
+      ${care.length?care.slice(0,5).map(c=>{
+        const t=CARE_TYPES.find(x=>x.id===c.type)||CARE_TYPES[CARE_TYPES.length-1];
+        return `<div class="mini-ride"><span class="em">${t.emoji}</span><span class="what"><b>${t.name}</b><span>${new Date(c.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}${c.note?' · '+esc(c.note):''}</span></span></div>`;
+      }).join(''):'<p class="horse-meta">Farrier visits, vet checks, and spa days go here 🛁</p>'}
+    </div>
+  </div>
+  ${bestMoments.length?`<div class="card horse-section">
+    <h3 style="margin-top:0">💫 Best moments</h3>
+    ${bestMoments.map(r=>`<div class="mini-ride"><span class="em">${(ACTIVITIES.find(a=>a.id===r.activity)||{}).emoji||'🐎'}</span><span class="what"><b>“${esc(r.note)}”</b><span>${new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</span></span><span class="mood">${MOODS[r.mood]||''}</span></div>`).join('')}
+  </div>`:''}
+  <div class="card horse-section">
+    <h3 style="margin-top:0">📖 Our rides</h3>
+    ${rides.length?rides.slice(0,10).map(r=>{
+      const a=ACTIVITIES.find(x=>x.id===r.activity)||ACTIVITIES[0];
+      return `<div class="mini-ride"><span class="em">${a.emoji}</span><span class="what"><b>${a.name} · ${r.minutes} min</b><span>${new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'})}${r.weather&&WEATHERS[r.weather]?' · '+WEATHERS[r.weather].emoji:''}</span></span><span class="mood">${MOODS[r.mood]||''}</span></div>`;
+    }).join('')+(rides.length>10?`<p class="horse-meta" style="margin-top:8px">…and ${rides.length-10} more in the Ride Journal</p>`:''):'<p class="horse-meta">The first ride is the start of the story ✨</p>'}
+  </div>
+  ${photos.length?`<div class="card horse-section">
+    <h3 style="margin-top:0">📸 Photo wall</h3>
+    <div class="photo-wall">${photos.map(ph=>`<img src="${ph}" alt="Photo of ${esc(h.name)}">`).join('')}</div>
+  </div>`:''}`;
+
+  $('#horse-back').addEventListener('click',()=>{currentHorsePage=null;switchTab('stable')});
+  $('#horse-log-ride').addEventListener('click',()=>openRideDialog(h.id));
+  $('#horse-edit').addEventListener('click',()=>openHorseDialog(h.id));
+  $('#horse-care').addEventListener('click',()=>openCareDialog(h.id));
+}
 
 /* ================= stats ================= */
 function renderStats(){
