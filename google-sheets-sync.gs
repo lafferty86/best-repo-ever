@@ -7,14 +7,23 @@
 const SECRET = '';
 
 function doPost(e){
+  // serialize concurrent pushes (two devices auto-saving) so tabs never interleave
+  const lock = LockService.getScriptLock();
+  try{ lock.waitLock(20000); }
+  catch(err){ return json_({ok:false, error:'sheet is busy — try again in a moment'}); }
   try{
     const d = JSON.parse(e.postData.contents);
     if(SECRET && d.secret !== SECRET) return json_({ok:false, error:'bad secret'});
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // raw app state, kept hidden, so FIREside can Pull it back
+    // raw app state, kept hidden, so FIREside can Pull it back.
+    // Chunked down column A: a single cell caps at 50,000 chars and long notes could exceed it.
     const raw = sheet_(ss, '_fireside_raw');
-    raw.getRange(1,1).setValue(JSON.stringify(d.state));
+    const json = JSON.stringify(d.state);
+    const chunks = [];
+    for(let i = 0; i < json.length || !chunks.length; i += 45000) chunks.push([json.slice(i, i + 45000)]);
+    raw.clearContents();
+    raw.getRange(1,1,chunks.length,1).setValues(chunks);
     try{ raw.hideSheet(); }catch(err){}
 
     // Dashboard tab
@@ -55,13 +64,19 @@ function doPost(e){
     return json_({ok:true});
   }catch(err){
     return json_({ok:false, error:String(err)});
+  }finally{
+    lock.releaseLock();
   }
 }
 
 function doGet(e){
   if(SECRET && (!e.parameter || e.parameter.secret !== SECRET)) return json_({ok:false, error:'bad secret'});
   const raw = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('_fireside_raw');
-  const txt = raw ? String(raw.getRange(1,1).getValue() || '') : '';
+  let txt = '';
+  if(raw && raw.getLastRow() > 0){
+    // rejoin the chunked JSON from column A
+    txt = raw.getRange(1,1,raw.getLastRow(),1).getValues().map(function(r){ return String(r[0] || ''); }).join('');
+  }
   return ContentService.createTextOutput(txt ? '{"ok":true,"state":' + txt + '}' : '{"ok":false,"error":"no data pushed yet"}')
     .setMimeType(ContentService.MimeType.JSON);
 }

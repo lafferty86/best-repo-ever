@@ -331,14 +331,14 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 </header>
 
 <nav class="tabs" role="tablist">
-  <button class="tab-btn" id="tabbtn-dash" role="tab" aria-selected="true" data-tab="dash">🔥 Dashboard</button>
-  <button class="tab-btn" id="tabbtn-opt" role="tab" aria-selected="false" data-tab="opt">✅ Optimize <span class="count" id="opt-count">0/0</span></button>
+  <button class="tab-btn" id="tabbtn-dash" role="tab" aria-selected="true" aria-controls="tab-dash" data-tab="dash">🔥 Dashboard</button>
+  <button class="tab-btn" id="tabbtn-opt" role="tab" aria-selected="false" aria-controls="tab-opt" data-tab="opt">✅ Optimize <span class="count" id="opt-count">0/0</span></button>
 </nav>
 
 <main class="wrap">
 
   <!-- ================= DASHBOARD ================= -->
-  <section id="tab-dash" role="tabpanel">
+  <section id="tab-dash" role="tabpanel" aria-labelledby="tabbtn-dash">
     <div class="fi-banner" id="fi-banner">🎉 By these numbers you're already financially independent. Everything below is gravy.</div>
 
     <div class="card">
@@ -396,7 +396,7 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   </section>
 
   <!-- ================= OPTIMIZE ================= -->
-  <section id="tab-opt" role="tabpanel" hidden>
+  <section id="tab-opt" role="tabpanel" aria-labelledby="tabbtn-opt" hidden>
     <div class="impact-bar" id="impact-bar"></div>
     <div class="chips" id="chips">
       <button class="chip" data-filter="all" aria-pressed="true">All</button>
@@ -417,7 +417,7 @@ footer .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 </footer>
 
 <div class="modal-back" id="sheet-modal" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-  <div class="modal">
+  <div class="modal" tabindex="-1">
     <h2 id="sheet-title">📊 Google Sheet storage <button class="x" id="sheet-close" aria-label="Close">✕</button></h2>
     <p class="sub">Use a Google Sheet as FIREside's storage: once connected, the app <b>loads your latest data from the sheet when it opens</b> and <b>saves back automatically after every change</b> — same data on every device, plus live Dashboard, Checklist, and History tabs in the sheet. One-time setup, ~2 minutes.</p>
     <ol>
@@ -573,15 +573,23 @@ const DEFAULTS={
   mod:0,           // last local data change — newest copy wins across devices
 };
 let state=load();
+function isObj(v){return !!v&&typeof v==='object'&&!Array.isArray(v)}
+function mergeState(s){ // build a safe state from untrusted data (storage, backup file, sheet)
+  if(!isObj(s))s={};
+  const out=Object.assign(structuredClone(DEFAULTS),s,{
+    inputs:Object.assign({},DEFAULTS.inputs,isObj(s.inputs)?s.inputs:{}),
+    sheet:Object.assign({},DEFAULTS.sheet,isObj(s.sheet)?s.sheet:{}),
+  });
+  for(const k of ['steps','custom','notes','open'])if(!isObj(out[k]))out[k]={};
+  for(const k of Object.keys(out.steps))if(!isObj(out.steps[k]))delete out.steps[k];
+  for(const k of Object.keys(out.custom))if(!Array.isArray(out.custom[k]))delete out.custom[k];
+  return out;
+}
 function load(){
   try{
     const raw=localStorage.getItem(LS_KEY);
     if(!raw) return structuredClone(DEFAULTS);
-    const s=JSON.parse(raw);
-    return Object.assign(structuredClone(DEFAULTS),s,{
-      inputs:Object.assign({},DEFAULTS.inputs,s.inputs),
-      sheet:Object.assign({},DEFAULTS.sheet,s.sheet),
-    });
+    return mergeState(JSON.parse(raw));
   }catch(e){return structuredClone(DEFAULTS)}
 }
 function persist(silent){
@@ -651,11 +659,11 @@ function fmt$(n){
   if(!isFinite(n))return'—';
   return '$'+Math.round(n).toLocaleString('en-US');
 }
-function fmtC(n){ // compact
+function fmtC(n){ // compact; keeps one decimal when needed so 12.5M never reads as $13M
   if(!isFinite(n))return'—';
   const a=Math.abs(n);
-  if(a>=1e6)return '$'+(n/1e6).toFixed(a>=1e7?0:1)+'M';
-  if(a>=1e3)return '$'+Math.round(n/1e3)+'k';
+  if(a>=1e6)return '$'+parseFloat((n/1e6).toFixed(1))+'M';
+  if(a>=1e3)return '$'+parseFloat((n/1e3).toFixed(1))+'k';
   return '$'+Math.round(n);
 }
 function fmtY(y){
@@ -670,7 +678,8 @@ function fmtPct(p){return isFinite(p)?Math.round(p*100)+'%':'—'}
 function renderTiles(c){
   const savingsBase=c.income>0?c.baseContrib/c.income:0;
   const savingsOpt=c.income>0?c.optContrib/c.income:0;
-  const prog=isFinite(c.optTarget)&&c.optTarget>0?c.assets/c.optTarget:0;
+  let prog=0; // a met/zero target reads as complete, matching the FI banner; an infinite target (swr 0) as 0
+  if(isFinite(c.optTarget))prog=c.optTarget>0?c.assets/c.optTarget:(c.assets>0?1:0);
   const shaved=(isFinite(c.baseYears)&&isFinite(c.optYears))?c.baseYears-c.optYears:0;
   const found=c.spendCut+c.boost;
   document.getElementById('fi-banner').style.display=(c.optYears<=0&&c.assets>0)?'block':'none';
@@ -704,7 +713,7 @@ function renderChart(c){
   const H=Math.max(10,Math.min(50,Math.ceil(finiteYears.length?Math.max(...finiteYears):15)+4));
   const base=project(c.assets,c.baseContrib,c.r,H);
   const opt=project(c.assets,c.optContrib,c.r,H);
-  const rawMax=Math.max(...base,...opt,isFinite(c.baseTarget)?c.baseTarget:0,isFinite(c.optTarget)?c.optTarget:0,1)*1.06;
+  const rawMax=Math.max(Math.max(...base,...opt,isFinite(c.baseTarget)?c.baseTarget:0,isFinite(c.optTarget)?c.optTarget:0,1)*1.06,1000);
   // nice round tick step, then extend max to the last tick
   const rough=rawMax/5,mag=Math.pow(10,Math.floor(Math.log10(rough)));
   const norm=rough/mag,tick=(norm<=1?1:norm<=2?2:norm<=2.5?2.5:norm<=5?5:10)*mag;
@@ -864,10 +873,13 @@ function renderAreas(){
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
 /* ================== master render ================== */
+function syncChips(){
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.filter===state.filter)));
+}
 function renderAll(opts){
   const c=calc();
   renderTiles(c);renderInsight(c);renderChart(c);
-  renderImpact(c);
+  renderImpact(c);syncChips();
   if(!opts||!opts.skipAreas)renderAreas();
 }
 
@@ -895,8 +907,7 @@ function fillInputs(){
 document.getElementById('chips').addEventListener('click',e=>{
   const b=e.target.closest('.chip');if(!b)return;
   state.filter=b.dataset.filter;persist();
-  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));
-  renderAreas();
+  syncChips();renderAreas();
 });
 // optimize interactions (delegated)
 document.getElementById('areas').addEventListener('click',e=>{
@@ -987,10 +998,8 @@ document.getElementById('file-import').addEventListener('change',e=>{
     try{
       const s=JSON.parse(rd.result);
       if(!s||typeof s!=='object'||!s.inputs)throw 0;
-      state=Object.assign(structuredClone(DEFAULTS),s,{
-        inputs:Object.assign({},DEFAULTS.inputs,s.inputs),
-        sheet:Object.assign({},DEFAULTS.sheet,s.sheet),
-      });
+      const candidate=mergeState(s); // validate & normalize BEFORE touching state/storage
+      state=candidate;
       persist();fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
       toast('Backup loaded 📂');confetti(60);
     }catch(err){toast('That file doesn’t look like a FIREside backup 😬')}
@@ -1016,14 +1025,23 @@ const GS_CODE=`/** FIREside -> Google Sheets sync bridge.
 const SECRET = '';
 
 function doPost(e){
+  // serialize concurrent pushes (two devices auto-saving) so tabs never interleave
+  const lock = LockService.getScriptLock();
+  try{ lock.waitLock(20000); }
+  catch(err){ return json_({ok:false, error:'sheet is busy — try again in a moment'}); }
   try{
     const d = JSON.parse(e.postData.contents);
     if(SECRET && d.secret !== SECRET) return json_({ok:false, error:'bad secret'});
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // raw app state, kept hidden, so FIREside can Pull it back
+    // raw app state, kept hidden, so FIREside can Pull it back.
+    // Chunked down column A: a single cell caps at 50,000 chars and long notes could exceed it.
     const raw = sheet_(ss, '_fireside_raw');
-    raw.getRange(1,1).setValue(JSON.stringify(d.state));
+    const json = JSON.stringify(d.state);
+    const chunks = [];
+    for(let i = 0; i < json.length || !chunks.length; i += 45000) chunks.push([json.slice(i, i + 45000)]);
+    raw.clearContents();
+    raw.getRange(1,1,chunks.length,1).setValues(chunks);
     try{ raw.hideSheet(); }catch(err){}
 
     // Dashboard tab
@@ -1064,13 +1082,19 @@ function doPost(e){
     return json_({ok:true});
   }catch(err){
     return json_({ok:false, error:String(err)});
+  }finally{
+    lock.releaseLock();
   }
 }
 
 function doGet(e){
   if(SECRET && (!e.parameter || e.parameter.secret !== SECRET)) return json_({ok:false, error:'bad secret'});
   const raw = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('_fireside_raw');
-  const txt = raw ? String(raw.getRange(1,1).getValue() || '') : '';
+  let txt = '';
+  if(raw && raw.getLastRow() > 0){
+    // rejoin the chunked JSON from column A
+    txt = raw.getRange(1,1,raw.getLastRow(),1).getValues().map(function(r){ return String(r[0] || ''); }).join('');
+  }
   return ContentService.createTextOutput(txt ? '{"ok":true,"state":' + txt + '}' : '{"ok":false,"error":"no data pushed yet"}')
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -1085,10 +1109,13 @@ function sheetPayload(){
     const st=stepState(s);
     rows.push([a.title,s.text,st.done?'YES':'',num(st.est),s.type==='boost'?'invest more':'cut spending',s.quick?'⚡':'']);
   }
+  // never store the passphrase/deploy URL inside the sheet itself — collaborators could read them;
+  // pull re-merges the local sheet config anyway (applyRemoteState keeps it)
+  const safeState=Object.assign({},state,{sheet:{auto:!!state.sheet.auto}});
   return {
     secret:state.sheet.secret||'',
     ts:new Date().toISOString().replace('T',' ').slice(0,19)+' UTC',
-    state,
+    state:safeState,
     summary:{
       income:c.income,spend:c.spend,assets:c.assets,
       savingsRatePct:c.income>0?Math.round(c.optContrib/c.income*100):0,
@@ -1101,20 +1128,28 @@ function sheetPayload(){
     rows,
   };
 }
-let _pushing=false,_ap=null;
+let _pushing=false,_ap=null,_sheetErr=null;
 function scheduleAutoPush(){
+  clearTimeout(_ap); // always cancel any pending timer — auto may have just been turned off or the URL cleared
   if(_pushing||!state.sheet||!state.sheet.auto||!state.sheet.url)return;
-  clearTimeout(_ap);_ap=setTimeout(()=>sheetPush(false),4000);
+  _ap=setTimeout(()=>{if(state.sheet.auto&&state.sheet.url)sheetPush(false)},4000);
 }
 function setSheetStatus(msg,ok){
   const el=document.getElementById('sheet-status');
-  if(msg!==undefined){el.textContent=msg;el.className=ok?'ok':'';return}
+  if(msg!==undefined){
+    if(ok===false)_sheetErr=msg; // errors stick so opening the panel later still shows them
+    el.textContent=msg;el.className=ok?'ok':'';return;
+  }
+  if(_sheetErr){el.textContent=_sheetErr;el.className='';return}
   el.className=state.sheet.last?'ok':'';
   el.textContent=state.sheet.last?('Last synced: '+new Date(state.sheet.last).toLocaleString()):'Not synced yet.';
 }
 async function sheetPush(manual){
   const url=(state.sheet.url||'').trim();
-  if(!url){openSheetModal();toast('Paste your Web app URL first 📊');return}
+  if(!url){
+    if(manual){openSheetModal();toast('Paste your Web app URL first 📊')}
+    return; // a stale auto-push after reset/URL-clear must stay silent
+  }
   if(_pushing)return;
   _pushing=true;setSheetStatus('Pushing to Google Sheet…');
   try{
@@ -1125,7 +1160,7 @@ async function sheetPush(manual){
     });
     const j=await res.json().catch(()=>null);
     if(res.ok&&j&&j.ok){
-      state.sheet.last=Date.now();
+      state.sheet.last=Date.now();_sheetErr=null;
       persist(true);setSheetStatus(); // silent: bookkeeping only; _pushing still true → no re-schedule loop
       if(manual)toast('Saved to Google Sheet ✅');
     }else{
@@ -1147,10 +1182,9 @@ async function sheetFetchState(){
 }
 function applyRemoteState(rs){
   const keep=Object.assign({},state.sheet,{last:Date.now()});
-  state=Object.assign(structuredClone(DEFAULTS),rs,{
-    inputs:Object.assign({},DEFAULTS.inputs,rs.inputs),
-    sheet:keep,
-  });
+  state=mergeState(rs);
+  state.sheet=keep;
+  _sheetErr=null;
   persist(true); // keep the remote copy's mod timestamp
   fillInputs();applyTheme();applyTab();fillSheetUI();renderAll();
   setSheetStatus();
@@ -1212,12 +1246,36 @@ function fillSheetUI(){
   document.getElementById('sheet-auto').checked=!!state.sheet.auto;
   setSheetStatus();
 }
-function openSheetModal(){fillSheetUI();document.getElementById('sheet-modal').classList.add('show')}
-function closeSheetModal(){document.getElementById('sheet-modal').classList.remove('show')}
+let _modalReturn=null;
+function openSheetModal(){
+  _modalReturn=document.activeElement;
+  fillSheetUI();
+  const back=document.getElementById('sheet-modal');
+  back.classList.add('show');
+  back.querySelector('.modal').focus(); // aria-modal: focus must enter the dialog
+}
+function closeSheetModal(){
+  const back=document.getElementById('sheet-modal');
+  if(!back.classList.contains('show'))return;
+  back.classList.remove('show');
+  if(_modalReturn&&document.contains(_modalReturn))_modalReturn.focus(); // return focus to the trigger
+  _modalReturn=null;
+}
 document.getElementById('btn-sheet').addEventListener('click',openSheetModal);
 document.getElementById('sheet-close').addEventListener('click',closeSheetModal);
 document.getElementById('sheet-modal').addEventListener('click',e=>{if(e.target.id==='sheet-modal')closeSheetModal()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheetModal()});
+// trap Tab inside the open dialog
+document.getElementById('sheet-modal').addEventListener('keydown',e=>{
+  if(e.key!=='Tab')return;
+  const back=document.getElementById('sheet-modal');
+  const f=[...back.querySelectorAll('button,input,textarea,select,[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>!el.disabled&&el.offsetParent!==null);
+  if(!f.length)return;
+  const first=f[0],last=f[f.length-1],cur=document.activeElement;
+  if(e.shiftKey&&(cur===first||cur===back.querySelector('.modal'))){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&cur===last){e.preventDefault();first.focus()}
+});
 document.getElementById('gs-code').textContent=GS_CODE;
 document.getElementById('gs-copy').addEventListener('click',e=>{
   e.preventDefault();e.stopPropagation();
@@ -1277,7 +1335,6 @@ function tick(){
 
 /* ================== boot ================== */
 applyTheme();applyTab();fillInputs();fillSheetUI();
-document.querySelectorAll('.chip').forEach(ch=>ch.setAttribute('aria-pressed',String(ch.dataset.filter===state.filter)));
 renderAll();
 bootSync();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{const c=calc();renderChart(c)});
