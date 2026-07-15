@@ -1,0 +1,9 @@
+# Build output
+/dist
+
+# Node
+node_modules/
+
+# Dev artifacts
+shot-*.png
+*.tsbuildinfo
