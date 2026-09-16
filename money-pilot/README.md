@@ -35,6 +35,9 @@ area/line, grouped bars, ranked bars) is **hand-drawn SVG** — zero charting de
 - State: a typed `useReducer` + Context store (Model-View-Update pattern — one immutable state
   object, one pure reducer), no external state library.
 
+For a full, layer-by-layer breakdown of the stack and how the pieces fit together, see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ## Prerequisites
 
 - [Node.js 18+](https://nodejs.org) (provides `npm`)
